@@ -14,18 +14,19 @@
 #include "GLCD_Config.h"
 #include "Board_LED.h"
 #include "Board_Buttons.h"
-#include "Board_ADC.h"
+//#include "Board_ADC.h"
 
-/*#include "GPIO_LPC17xx.h"
+#include "GPIO_LPC17xx.h"
 #include "PIN_LPC17xx.h"
 #include "LPC17xx.h"
-
+#include "potenciometro.h"
+#include "lcd.h"
 
 #define PUERTO_LED 			1
 #define LED_1 					18
 #define LED_2 					20
 #define LED_3 					21
-#define LED_4 					23*/
+#define LED_4 					23
 
 extern GLCD_FONT GLCD_Font_6x8;
 extern GLCD_FONT GLCD_Font_16x24;
@@ -33,6 +34,7 @@ extern GLCD_FONT GLCD_Font_16x24;
 bool LEDrun;
 bool LCDupdate;
 char lcd_text[2][20+1];
+char buffer_LCD[512];
 
 static void BlinkLed (void const *arg);
 static void Display (void const *arg);
@@ -41,12 +43,12 @@ osThreadDef(BlinkLed, osPriorityNormal, 1, 0);
 osThreadDef(Display, osPriorityNormal, 1, 0);
 
 
-/*void InitLED(){
+void InitLED(){
 	GPIO_SetDir (PUERTO_LED, LED_1, GPIO_DIR_OUTPUT); 	// Establece dirección salida puerto LED1
 	GPIO_SetDir (PUERTO_LED, LED_2, GPIO_DIR_OUTPUT); 	// Establece dirección salida puerto LED2
 	GPIO_SetDir (PUERTO_LED, LED_3, GPIO_DIR_OUTPUT); 	// Establece dirección salida puerto LED3
 	GPIO_SetDir (PUERTO_LED, LED_4, GPIO_DIR_OUTPUT); 	// Establece dirección salida puerto LED4	
-}*/
+}
 
 /// Read analog inputs
 uint16_t AD_in (uint32_t ch) {
@@ -82,14 +84,15 @@ void dhcp_client_notify (uint32_t if_num,
 static void Display (void const *arg) {
   char lcd_buf[20+1];
 
-  GLCD_Initialize         ();
+  /*GLCD_Initialize         ();
   GLCD_SetBackgroundColor (GLCD_COLOR_BLUE);
   GLCD_SetForegroundColor (GLCD_COLOR_WHITE);
   GLCD_ClearScreen        ();
   GLCD_SetFont            (&GLCD_Font_16x24);
   GLCD_DrawString         (0, 1*24, "       MDK-MW       ");
   GLCD_DrawString         (0, 2*24, "HTTP Server example ");
-
+*/
+	
   sprintf (lcd_text[0], "");
   sprintf (lcd_text[1], "Waiting for DHCP");
   LCDupdate = true;
@@ -110,16 +113,18 @@ static void Display (void const *arg) {
   Thread 'BlinkLed': Blink the LEDs on an eval board
  *---------------------------------------------------------------------------*/
 static void BlinkLed (void const *arg) {
-  const uint8_t led_val[16] = { 0x48,0x88,0x84,0x44,0x42,0x22,0x21,0x11,
-                                0x12,0x0A,0x0C,0x14,0x18,0x28,0x30,0x50 };
+  const uint32_t led_val[13] = {0x040000,0x140000,0x340000,0xB40000,0xB00000,0xA00000,
+															0x800000,0xA00000,0xB00000,0xB40000,0x340000,0x140000,0x040000};
+	//const uint32_t led_val[13] = {0,0,0,0,0,0,0,0,0,0,0,0,0};
+	
   int cnt = 0;
 
   LEDrun = true;
   while(1) {
     // Every 100 ms
     if (LEDrun == true) {
-      LED_SetOut (led_val[cnt]);
-      if (++cnt >= sizeof(led_val)) {
+      GPIO_PortWrite(PUERTO_LED,0x00B40000,led_val[cnt]);
+      if (++cnt >= 13) {
         cnt = 0;
       }
     }
@@ -134,11 +139,13 @@ int main (void) {
  // LED_Initialize     ();
  // Buttons_Initialize ();
  // ADC_Initialize     ();
-  //InitLED();
-	net_initialize     ();
-
+	Init_Pot1();
+	InitLED();
+  net_initialize     ();
+	Init_lcd();
+	
   osThreadCreate (osThread(BlinkLed), NULL);
-  osThreadCreate (osThread(Display), NULL);
+  //osThreadCreate (osThread(Display), NULL);
 
   while(1) {
     net_main ();

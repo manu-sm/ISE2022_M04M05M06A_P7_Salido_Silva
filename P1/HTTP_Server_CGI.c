@@ -13,7 +13,7 @@
 #include "rl_net_lib.h"
 #include "Board_LED.h"
 
-/*#include "GPIO_LPC17xx.h"
+#include "GPIO_LPC17xx.h"
 #include "PIN_LPC17xx.h"
 #include "LPC17xx.h"
 
@@ -22,7 +22,7 @@
 #define LED_1 					18
 #define LED_2 					20
 #define LED_3 					21
-#define LED_4 					23*/
+#define LED_4 					23
 
 // http_server.c
 extern uint16_t AD_in (uint32_t ch);
@@ -45,7 +45,7 @@ extern bool LCDupdate;
 extern char lcd_text[2][20+1];
 
 // Local variables.
-static uint32_t P2;
+static uint8_t P2;
 
 // My structure of CGI status variable.
 typedef struct {
@@ -104,10 +104,11 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
   }
 
   P2 = 0;
+	GPIO_PortWrite(PUERTO_LED,0x00B40000,P2);
   LEDrun = true;
   if (len == 0) {
     // No data or all items (radio, checkbox) are off
-    //GPIO_PortWrite (PUERTO_LED,0x00B40000,P2);
+    LED_SetOut (P2);
     return;
   }
   passw[0] = 1;
@@ -117,28 +118,32 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
     if (var[0] != 0) {
       // First character is non-null, string exists
       if (strcmp (var, "led0=on") == 0) {
-        //P2 |= 1 << LED_1;
+        P2 |= 0x01;
+				GPIO_PinWrite(PUERTO_LED,LED_1,1);
       }
       else if (strcmp (var, "led1=on") == 0) {
-        //P2 |= 1 << LED_2;
+        P2 |= 0x02;
+				GPIO_PinWrite(PUERTO_LED,LED_2,1);
       }
       else if (strcmp (var, "led2=on") == 0) {
-        //P2 |= 1 << LED_3;
+        P2 |= 0x04;
+				GPIO_PinWrite(PUERTO_LED,LED_3,1);
       }
       else if (strcmp (var, "led3=on") == 0) {
-        //P2 |= 1 << LED_4;
+        P2 |= 0x08;
+				GPIO_PinWrite(PUERTO_LED,LED_4,1);
       }
       else if (strcmp (var, "led4=on") == 0) {
-        //P2 |= 0x10;
+        P2 |= 0x10;
       }
       else if (strcmp (var, "led5=on") == 0) {
-        //P2 |= 0x20;
+        P2 |= 0x20;
       }
       else if (strcmp (var, "led6=on") == 0) {
-        //P2 |= 0x40;
+        P2 |= 0x40;
       }
       else if (strcmp (var, "led7=on") == 0) {
-        //P2 |= 0x80;
+        P2 |= 0x80;
       }
       else if (strcmp (var, "ctrl=Browser") == 0) {
         LEDrun = false;
@@ -168,7 +173,7 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
       }
     }
   } while (data);
-  //GPIO_PortWrite (PUERTO_LED,0x00B40000,P2);
+  //LED_SetOut (P2);
 }
 
 // Generate dynamic web data from a script line.
