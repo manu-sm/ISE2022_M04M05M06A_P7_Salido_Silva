@@ -16,6 +16,7 @@
 #include "GPIO_LPC17xx.h"
 #include "PIN_LPC17xx.h"
 #include "LPC17xx.h"
+#include "RTC.h"
 
 
 #define PUERTO_LED 			1
@@ -23,6 +24,8 @@
 #define LED_2 					20
 #define LED_3 					21
 #define LED_4 					23
+
+int actualiza = false;
 
 // http_server.c
 extern uint16_t AD_in (uint32_t ch);
@@ -171,6 +174,12 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
         strcpy (lcd_text[1], var+5);
         LCDupdate = true;
       }
+			else if (strcmp (var, "update=on") == 0) {
+        // LCD Module line 2 text
+				actualiza = true;
+        get_time();
+				actualiza = false;
+      }
     }
   } while (data);
   //LED_SetOut (P2);
@@ -183,6 +192,7 @@ uint32_t cgi_script (const char *env, char *buf, uint32_t buflen, uint32_t *pcgi
   uint32_t len = 0;
   uint8_t id;
   static uint32_t adv;
+	uint32_t segundo, minuto, hora, dia, mes, anio;
 
   switch (env[0]) {
     // Analyze a 'c' script line starting position 2
@@ -336,6 +346,27 @@ uint32_t cgi_script (const char *env, char *buf, uint32_t buflen, uint32_t *pcgi
       len = sprintf (buf, "<checkbox><id>button%c</id><on>%s</on></checkbox>",
                      env[1], (get_button () & (1 << (env[1]-'0'))) ? "true" : "false");
       break;
+		
+		case 'h':
+			// Time and date 
+			segundo = get_RTC_param(T_SEGUNDO);
+			minuto = get_RTC_param(T_MINUTO);
+			hora = get_RTC_param(T_HORA);
+			dia = get_RTC_param(T_DIA_MES);
+		  mes = get_RTC_param(T_MES);
+		  anio = get_RTC_param(T_ANIO);
+		
+			switch (env[2]) {
+        case '1':
+          len = sprintf (buf, &env[4], hora, minuto, segundo);
+          break;
+        case '2':
+          len = sprintf (buf, &env[4], dia, mes, anio);
+          break;
+      }
+		
+			//len = sprintf(buf,&env[4],hora,minuto,segundo,dia,mes,anio);
+			break;
   }
   return (len);
 }

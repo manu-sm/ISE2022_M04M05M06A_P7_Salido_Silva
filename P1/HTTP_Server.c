@@ -14,6 +14,8 @@
 #include "GLCD_Config.h"
 #include "Board_LED.h"
 #include "Board_Buttons.h"
+#include "time.h"
+#include "rtc.h"
 //#include "Board_ADC.h"
 
 #include "GPIO_LPC17xx.h"
@@ -21,6 +23,7 @@
 #include "LPC17xx.h"
 #include "potenciometro.h"
 #include "lcd.h"
+#include "time.h"
 
 #define PUERTO_LED 			1
 #define LED_1 					18
@@ -35,12 +38,19 @@ bool LEDrun;
 bool LCDupdate;
 char lcd_text[2][20+1];
 char buffer_LCD[512];
+char hora [64];
+char fecha [64];
+
 
 static void BlinkLed (void const *arg);
 static void Display (void const *arg);
+static void RTC (void const *arg);
 
 osThreadDef(BlinkLed, osPriorityNormal, 1, 0);
 osThreadDef(Display, osPriorityNormal, 1, 0);
+osThreadDef(RTC, osPriorityNormal, 1, 0);
+
+uint64_t segundos = 0;
 
 
 void InitLED(){
@@ -82,7 +92,7 @@ void dhcp_client_notify (uint32_t if_num,
   Thread 'Display': LCD display handler
  *---------------------------------------------------------------------------*/
 static void Display (void const *arg) {
-  char lcd_buf[20+1];
+  //char lcd_buf[20+1];
 
   /*GLCD_Initialize         ();
   GLCD_SetBackgroundColor (GLCD_COLOR_BLUE);
@@ -99,10 +109,12 @@ static void Display (void const *arg) {
 
   while(1) {
     if (LCDupdate == true) {
-      sprintf (lcd_buf, "%-20s", lcd_text[0]);
+      /*sprintf (lcd_buf, "%-20s", lcd_text[0]);
       GLCD_DrawString (0, 5*24, lcd_buf);
       sprintf (lcd_buf, "%-20s", lcd_text[1]);
-      GLCD_DrawString (0, 6*24, lcd_buf);
+      GLCD_DrawString (0, 6*24, lcd_buf);*/
+			EscribeLinea_1(lcd_text[0]);
+			EscribeLinea_2(lcd_text[1]);
       LCDupdate = false;
     }
     osDelay (250);
@@ -133,6 +145,13 @@ static void BlinkLed (void const *arg) {
 }
 
 /*----------------------------------------------------------------------------
+  Thread 'RTC': 
+ *---------------------------------------------------------------------------*/
+static void RTC (void const *arg) {
+  rtc_control();
+}
+
+/*----------------------------------------------------------------------------
   Main Thread 'main': Run Network
  *---------------------------------------------------------------------------*/
 int main (void) {
@@ -142,13 +161,20 @@ int main (void) {
 	Init_Pot1();
 	InitLED();
   net_initialize     ();
-	Init_lcd();
+	//LCD_init();
+	//LCD_reset();
+	//get_time();
 	
   osThreadCreate (osThread(BlinkLed), NULL);
+	osThreadCreate (osThread(RTC), NULL);
+	Init_lcd();
   //osThreadCreate (osThread(Display), NULL);
+	
 
   while(1) {
     net_main ();
+		
+		//get_time();
     osThreadYield ();
   }
 }

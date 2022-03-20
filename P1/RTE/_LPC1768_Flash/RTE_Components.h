@@ -25,6 +25,8 @@
 /* Keil.MDK-Pro Net_v6::Network:Interface:ETH:6.7.7 */
 #define RTE_Network_Interface_ETH_0     /* Network Interface ETH 0 */
 
+/* Keil.MDK-Pro Net_v6::Network:Service:SNTP Client:6.7.7 */
+#define RTE_Network_SNTP_Client         /* Network SNTP Client */
 /* Keil.MDK-Pro Net_v6::Network:Service:Web Server Compact:6.7.7 */
 #define RTE_Network_Web_Server_RO       /* Network Web Server with Read-only Web Resources */
 /* Keil.MDK-Pro Net_v6::Network:Socket:TCP:6.7.7 */

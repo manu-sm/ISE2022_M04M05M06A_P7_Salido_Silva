@@ -54,4 +54,6 @@ dkms.conf
 # Other files
 
 *.uvguix*
-.\Output
+/Output/
+*.crf
+*.lst
