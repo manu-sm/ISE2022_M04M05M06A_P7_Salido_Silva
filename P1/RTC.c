@@ -1,4 +1,3 @@
-#include "RTC.h"
 #include "GPIO_LPC17xx.h"
 #include "PIN_LPC17xx.h"
 #include "LPC17xx.h"
@@ -8,6 +7,8 @@
 #include "rl_net.h" 
 #include "time.h"
 #include "lcd.h"
+#include "RTC.h"
+#include "rebotes_joystick.h"
 
 #define RTC_POWER_CONTROL		9		 /* Power control RTC*/
 #define SBIT_CLKEN     			0    /* RTC Clock Enable*/
@@ -15,6 +16,42 @@
 #define SBIT_CCALEN         4    /* RTC Calibration counter enable */
 #define ILR_RTCCIF          0		 /* interrupt RTC counter */
 
+#define OFFSET_UTC1					3600 // Offset para zona horaria UTC+1			
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/* SIGNALS */
+/**
+*	Variable global que almacenara el flag de la señal que se está enviando
+*/
+int32_t signals;
+
+osEvent pulse_pwd_center_event;
+
+extern osThreadId tid_rebotes_joystick; 
+
+/**
+*	Puerto de entrada al que esta conectado el joystick
+*/
+#define PUERTO_INT	0
+/**
+*	Puerto 0.17 ==> Pin 12 al que esta conectado sw_down
+*/
+#define LINEA_INT_PIN_12	17		
+/**
+*	Puerto 0.15 ==> Pin 13 al que esta conectado sw_left
+*/
+#define LINEA_INT_PIN_13	15	
+/**
+*	Puerto 0.23 ==> Pin 15 al que esta conectado sw_up
+*/
+#define LINEA_INT_PIN_15	23			
+/**
+*	Puerto 0.24 ==> Pin 16 al que esta conectado sw_right
+*/
+#define LINEA_INT_PIN_16	24			
+/**
+*	Puerto 0.16 ==> Pin 14 al que esta conectado sw_center
+*/
+#define LINEA_INT_PIN_14	16	
 
 
 uint16_t year;
@@ -46,6 +83,15 @@ void init_RTC (){
 	LPC_RTC->AMR = 0xFF; // Enmascaradas alarmas RTC
 	LPC_RTC->CALIBRATION = 0x00;
 	
+	PIN_Configure(PUERTO_INT, LINEA_INT_PIN_12, PIN_FUNC_0, PIN_PINMODE_PULLDOWN, PIN_PINMODE_NORMAL);
+	PIN_Configure(PUERTO_INT, LINEA_INT_PIN_13, PIN_FUNC_0, PIN_PINMODE_PULLDOWN, PIN_PINMODE_NORMAL);
+	PIN_Configure(PUERTO_INT, LINEA_INT_PIN_15, PIN_FUNC_0, PIN_PINMODE_PULLDOWN, PIN_PINMODE_NORMAL);
+	PIN_Configure(PUERTO_INT, LINEA_INT_PIN_16, PIN_FUNC_0, PIN_PINMODE_PULLDOWN, PIN_PINMODE_NORMAL);
+	PIN_Configure(PUERTO_INT, LINEA_INT_PIN_14, PIN_FUNC_0, PIN_PINMODE_PULLDOWN, PIN_PINMODE_NORMAL);
+	
+	//- Indicamos en el registro IO0IntEnR que entradas van a poder generar interrupciones.
+	LPC_GPIOINT->IO0IntEnR = (1<<LINEA_INT_PIN_12) | (1<<LINEA_INT_PIN_13) | (1<<LINEA_INT_PIN_15)| (1<<LINEA_INT_PIN_16) | (1<<LINEA_INT_PIN_14);
+	NVIC_EnableIRQ(EINT3_IRQn);	// Activamos las interruptciones del ENT3 (Asociado al GPIO).
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -216,7 +262,7 @@ static void time_cback (uint32_t time) {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void convert_unix_to_local (uint32_t time){
 	
-	time_t ahora = time;
+	time_t ahora = time + OFFSET_UTC1;
 	struct tm* hora_local = localtime(&ahora);
 	
 	year  = hora_local->tm_year+1900;	// Te devuelve los años desde 1900
@@ -241,21 +287,26 @@ void rtc_control (void){
 	EscribeLinea_1(hora);
 	EscribeLinea_2(fecha);
 	LCD_update();
+	get_time();
 	
 	while (1){
 			if (flag_min == true) {
 				if (contador == 3){
 					contador = 0;
 					get_time();
-					//convert_unix_to_local (tiempo_unix);
-					//set_hour (hour, min, sec);
-					//set_date (date, month, year);
 				}
 				else {
 				contador++;
 			}
 			  flag_min = false;
 		}
+			
+			pulse_pwd_center_event = osSignalWait (pwd_center_signal_event, 100);
+				if (pulse_pwd_center_event.status == osEventSignal) {
+					set_hour (0, 0, 0);
+					set_date (1, 1, 2000);
+				}
+				
 			get_hora ();
 			get_fecha ();
 			EscribeLinea_1(hora);
@@ -272,3 +323,40 @@ void RTC_IRQHandler(void){
 		flag_min = true;
 	}
 }
+
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/**
+* Rutina de atencion  las interrupciones del EINT3.
+*		Manda una señal al hilo rebotes_joystick avisandole de que se ha producido una interrupcion en alguno de los pulsadores. El hilo sera el encargado de controlar el rebote y determinar
+*		que boton es el que se ha pulsado.
+*/
+void EINT3_IRQHandler (void){
+	// Pulsación del botón derecho
+	if (LPC_GPIOINT->IO0IntStatR == 1 << LINEA_INT_PIN_16) {
+		  LPC_GPIOINT->IO0IntClr = 1 << LINEA_INT_PIN_16;
+			signals = osSignalSet (tid_rebotes_joystick, signal_pwd_pulse); 										
+	}
+	// Pulsación del botón izquierdo
+	else if (LPC_GPIOINT->IO0IntStatR == 1 << LINEA_INT_PIN_13){
+		  LPC_GPIOINT->IO0IntClr = 1 << LINEA_INT_PIN_13;
+			signals = osSignalSet (tid_rebotes_joystick, signal_pwd_pulse); 
+	}
+	// Pulsación del botón de arriba
+	else if (LPC_GPIOINT->IO0IntStatR == 1 << LINEA_INT_PIN_15) {
+		  LPC_GPIOINT->IO0IntClr = 1 << LINEA_INT_PIN_15;
+			signals = osSignalSet (tid_rebotes_joystick, signal_pwd_pulse); 
+	}
+	// Pulsación del botón de abajo
+	else if (LPC_GPIOINT->IO0IntStatR == 1 << LINEA_INT_PIN_12){
+		  LPC_GPIOINT->IO0IntClr = 1 << LINEA_INT_PIN_12;
+			signals = osSignalSet (tid_rebotes_joystick, signal_pwd_pulse); 
+	}
+	// Pulsación del botón del centro
+	else if (LPC_GPIOINT->IO0IntStatR == 1 << LINEA_INT_PIN_14){
+		  LPC_GPIOINT->IO0IntClr = 1 << LINEA_INT_PIN_14;
+			signals = osSignalSet (tid_rebotes_joystick, signal_pwd_pulse); 
+	}
+}
+
+

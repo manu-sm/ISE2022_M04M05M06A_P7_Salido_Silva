@@ -14,9 +14,9 @@ ARM_DRIVER_SPI *SPIDrv = &Driver_SPI1;
 unsigned char buffer[512];
 uint8_t posicionL1 = 0, posicionL2 = 0;
 
-void lcd (void const *argument);                             // thread function
-osThreadId tid_lcd;                                          // thread id
-osThreadDef (lcd, osPriorityNormal, 1, 0);                   // thread object
+//void lcd (void const *argument);                             // thread function
+//osThreadId tid_lcd;                                          // thread id
+//osThreadDef (lcd, osPriorityNormal, 1, 0);                   // thread object
 
 extern bool LCDupdate;
 extern char lcd_text [2][21];
@@ -203,6 +203,7 @@ void EscribeLinea_2(char *letras){
 }
 
 
+/*
 int Init_lcd (void) {
 
   tid_lcd = osThreadCreate (osThread(lcd), NULL);
@@ -212,9 +213,9 @@ int Init_lcd (void) {
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-/*----------------------------------------------------------------------------
+/----------------------------------------------------------------------------
  *      Thread 1 'Thread_Name': Sample thread
- *---------------------------------------------------------------------------*/
+ *---------------------------------------------------------------------------/
 void lcd (void const *argument) {
 
 	// Configuración del LCD
@@ -233,5 +234,5 @@ void lcd (void const *argument) {
 		
     //osThreadYield ();                                           // suspend thread
 }
-
+*/
 

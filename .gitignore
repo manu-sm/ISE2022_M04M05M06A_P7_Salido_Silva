@@ -53,7 +53,9 @@ dkms.conf
 
 # Other files
 
-*.uvguix*
+*.uvguix.*
+P1/Output/
 /Output/
 *.crf
 *.lst
+*.iex

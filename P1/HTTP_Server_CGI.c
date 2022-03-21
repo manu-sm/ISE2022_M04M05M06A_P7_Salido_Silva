@@ -25,7 +25,7 @@
 #define LED_3 					21
 #define LED_4 					23
 
-int actualiza = false;
+
 
 // http_server.c
 extern uint16_t AD_in (uint32_t ch);
@@ -175,10 +175,7 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
         LCDupdate = true;
       }
 			else if (strcmp (var, "update=on") == 0) {
-        // LCD Module line 2 text
-				actualiza = true;
-        get_time();
-				actualiza = false;
+				get_time();
       }
     }
   } while (data);

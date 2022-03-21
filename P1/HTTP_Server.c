@@ -14,8 +14,6 @@
 #include "GLCD_Config.h"
 #include "Board_LED.h"
 #include "Board_Buttons.h"
-#include "time.h"
-#include "rtc.h"
 //#include "Board_ADC.h"
 
 #include "GPIO_LPC17xx.h"
@@ -24,6 +22,8 @@
 #include "potenciometro.h"
 #include "lcd.h"
 #include "time.h"
+#include "rtc.h"
+#include "rebotes_joystick.h"
 
 #define PUERTO_LED 			1
 #define LED_1 					18
@@ -46,6 +46,7 @@ static void BlinkLed (void const *arg);
 static void Display (void const *arg);
 static void RTC (void const *arg);
 
+osThreadId tid_RTC;
 osThreadDef(BlinkLed, osPriorityNormal, 1, 0);
 osThreadDef(Display, osPriorityNormal, 1, 0);
 osThreadDef(RTC, osPriorityNormal, 1, 0);
@@ -161,14 +162,14 @@ int main (void) {
 	Init_Pot1();
 	InitLED();
   net_initialize     ();
-	//LCD_init();
-	//LCD_reset();
-	//get_time();
+	LCD_init();
+	LCD_reset();
+	get_time();
 	
   osThreadCreate (osThread(BlinkLed), NULL);
-	osThreadCreate (osThread(RTC), NULL);
-	Init_lcd();
+	tid_RTC = osThreadCreate (osThread(RTC), NULL);
   //osThreadCreate (osThread(Display), NULL);
+	Init_rebotes_joystick();
 	
 
   while(1) {

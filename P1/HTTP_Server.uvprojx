@@ -428,6 +428,16 @@
               <FileType>1</FileType>
               <FilePath>.\RTC.c</FilePath>
             </File>
+            <File>
+              <FileName>Rebotes_joystick.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Rebotes_joystick.h</FilePath>
+            </File>
+            <File>
+              <FileName>Rebotes_joystick.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Rebotes_joystick.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -983,6 +993,16 @@
               <FileName>RTC.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\RTC.c</FilePath>
+            </File>
+            <File>
+              <FileName>Rebotes_joystick.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Rebotes_joystick.h</FilePath>
+            </File>
+            <File>
+              <FileName>Rebotes_joystick.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Rebotes_joystick.c</FilePath>
             </File>
           </Files>
         </Group>
