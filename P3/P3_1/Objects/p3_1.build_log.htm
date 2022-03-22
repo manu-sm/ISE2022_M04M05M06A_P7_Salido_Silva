@@ -28,13 +28,13 @@ Project File Date:  03/22/2022
 *** Using Compiler 'V5.06 update 7 (build 960)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
 Rebuild target 'Target 1'
 assembling startup_LPC17xx.s...
-compiling main.c...
 compiling PIN_LPC17xx.c...
-compiling GPIO_LPC17xx.c...
 compiling system_LPC17xx.c...
+compiling GPIO_LPC17xx.c...
+compiling main.c...
 compiling GPDMA_LPC17xx.c...
 linking...
-Program Size: Code=1608 RO-data=252 RW-data=12 ZI-data=772  
+Program Size: Code=2048 RO-data=252 RW-data=16 ZI-data=768  
 ".\Objects\p3_1.axf" - 0 Error(s), 0 Warning(s).
 
 <h2>Software Packages used:</h2>
@@ -70,17 +70,17 @@ Package Vendor: Keil
       Source file:   RTE_Driver\GPDMA_LPC17xx.c
 
    * Component: Keil::Device:GPIO:1.1.0
-      Include file:  RTE_Driver\GPIO_LPC17xx.h
       Source file:   RTE_Driver\GPIO_LPC17xx.c
+      Include file:  RTE_Driver\GPIO_LPC17xx.h
 
    * Component: Keil::Device:PIN:1.0.0
-      Include file:  RTE_Driver\PIN_LPC17xx.h
       Source file:   RTE_Driver\PIN_LPC17xx.c
+      Include file:  RTE_Driver\PIN_LPC17xx.h
 
    * Component: Keil::Device:Startup:1.0.0
       Source file:   Device\Source\ARM\startup_LPC17xx.s
-      Source file:   Device\Source\system_LPC17xx.c
       Include file:  Device\Include\LPC17xx.h
+      Source file:   Device\Source\system_LPC17xx.c
       Include file:  RTE_Driver\Config\RTE_Device.h
 Build Time Elapsed:  00:00:00
 </pre>
