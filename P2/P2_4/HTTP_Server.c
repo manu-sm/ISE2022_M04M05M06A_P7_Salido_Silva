@@ -138,7 +138,6 @@ int main (void) {
 	InitLED();
   net_initialize     ();
 	Init_lcd();
-	//get_time();
   osThreadCreate (osThread(BlinkLed), NULL);
 	/*----------------------------------------------------------------------------------------------------------------*/
 	tid_RTC = osThreadCreate (osThread(RTC), NULL);
@@ -146,7 +145,6 @@ int main (void) {
 	Init_rebotes_joystick();
 	/*----------------------------------------------------------------------------------------------------------------*/
 	rtc_update = true;
-	
 	
   while(1) {
     net_main ();

@@ -253,7 +253,7 @@ void get_time (void) {
  
 static void time_cback (uint32_t time) {
   if (time == 0) {
-    //sprintf (lcd_text[0],"Error, server not responding");
+    sprintf (lcd_text[0],"Error, server not responding");
   }
   else {
 		//sprintf (lcd_text[0], "no error");
@@ -289,7 +289,7 @@ void rtc_control (void){
 	
 	init_RTC ();
 	enable_RTC();
-	set_hour_intrrupt (1);
+	set_hour_intrrupt (2);
 	get_hora ();
 	get_fecha ();
 	//EscribeLinea_1(hora);
