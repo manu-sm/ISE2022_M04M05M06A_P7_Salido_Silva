@@ -46,7 +46,7 @@ char lcd_text[2][20+1];
 char buffer_LCD[512];
 char hora [64];
 char fecha [64];
-uint16_t array_lcd = 0;
+
 
 static void BlinkLed (void const *arg);
 static void RTC (void const *arg);
@@ -148,13 +148,6 @@ int main (void) {
 	
   while(1) {
     net_main ();
-		if (rtc_update){
-			LCDupdate = true;
-			for  (array_lcd = 0; array_lcd<20; array_lcd++){
-				lcd_text[0][array_lcd] = hora[array_lcd];
-				lcd_text[1][array_lcd] = fecha[array_lcd];
-			}
-		}
     osThreadYield ();
   }
 }
