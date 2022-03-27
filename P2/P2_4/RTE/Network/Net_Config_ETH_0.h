@@ -65,7 +65,7 @@
 
 //     <o>Address byte 4 <0-255>
 //     <i>Default: 100
-#define ETH0_IP4                80
+#define ETH0_IP4                107
 //   </h>
 
 //   <h>Subnet mask
@@ -118,11 +118,11 @@
 
 //     <o>Address byte 3 <0-255>
 //     <i>Default: 2
-#define ETH0_PRI_DNS3           62
+#define ETH0_PRI_DNS3           1
 
 //     <o>Address byte 4 <0-255>
 //     <i>Default: 129
-#define ETH0_PRI_DNS4           207
+#define ETH0_PRI_DNS4           1
 //   </h>
 
 //   <h>Secondary DNS Server

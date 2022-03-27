@@ -74,11 +74,11 @@ bool flag_center_joystick;
 time_t tiempo_unix;
 
 // Estados.
-typedef enum {ntp_server, local} estado_rtc_t;		
-estado_rtc_t  estado_rtc;
+//typedef enum {ntp_server, local} estado_rtc_t;		
+//estado_rtc_t  estado_rtc;
 
 // Definición del timer para controlar el RGB
-#define time_oneshot_timer_led_rgb 2000
+#define time_oneshot_timer_led_rgb 3000
 void callback_Timer_led_rgb (void const *arg);																// prototype for timer callback function
 osTimerDef (one_shot_led, callback_Timer_led_rgb);														// define timer
 osTimerId id_pwd_timer_led_rgb;
@@ -280,6 +280,9 @@ static void time_cback (uint32_t time) {
 		convert_unix_to_local (tiempo_unix);
 		set_hour (hour, min, sec);
 		set_date (date, month, year);
+		// Arrancamos el timer one_shot para el led RGB
+		osTimerStart(id_pwd_timer_led_rgb, time_oneshot_timer_led_rgb);
+		GPIO_PinWrite(port_led_RGB,led_BLUE,0);
 		//EscribeLinea_1(hora);
 		//EscribeLinea_2(fecha);
 		//LCD_update();
@@ -320,12 +323,10 @@ void rtc_control (void){
 	while (1){
 		
 		if (flag_min == true) {
-				if (contador == 3){
+				if (contador == 2){
 						contador = 0;
 						get_time();
-						// Arrancamos el timer one_shot para el led RGB
-						osTimerStart(id_pwd_timer_led_rgb, time_oneshot_timer_led_rgb);
-						GPIO_PinWrite(port_led_RGB,led_BLUE,0);
+						
 					}
 					else {
 					contador++;
@@ -337,7 +338,7 @@ void rtc_control (void){
 					set_hour (0, 0, 0);
 					set_date (1, 1, 2020);
 					flag_center_joystick = false;
-					estado_rtc = local;
+					//estado_rtc = local;
 			}
 				
 		/*switch (estado_rtc){

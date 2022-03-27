@@ -175,9 +175,11 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
         strcpy (lcd_text[1], var+5);
         LCDupdate = true;
       }
+			else if (strcmp (var, "update=on") == 0) {
+				get_time();
+      }
     }
   } while (data);
-  //LED_SetOut (P2);
 }
 
 // Generate dynamic web data from a script line.
@@ -346,14 +348,22 @@ uint32_t cgi_script (const char *env, char *buf, uint32_t buflen, uint32_t *pcgi
 		
 		case 'h':
 			// Time and date
-			segundo = get_RTC_param(T_SEGUNDO);
+		segundo = get_RTC_param(T_SEGUNDO);
 			minuto = get_RTC_param(T_MINUTO);
 			hora = get_RTC_param(T_HORA);
 			dia = get_RTC_param(T_DIA_MES);
 		  mes = get_RTC_param(T_MES);
 		  anio = get_RTC_param(T_ANIO);
+		
+			switch (env[2]) {
+        case '1':
+          len = sprintf (buf, &env[4], hora, minuto, segundo);
+          break;
+        case '2':
+          len = sprintf (buf, &env[4], dia, mes, anio);
+          break;
+      }		
 			rtc_update = true;
-			len = sprintf(buf,&env[4],hora,minuto,segundo,dia,mes,anio);
 			break;
   }
   return (len);
