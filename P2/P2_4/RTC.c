@@ -50,7 +50,13 @@ extern osThreadId tid_rebotes_joystick;
 /**
 *	Puerto 0.16 ==> Pin 14 al que esta conectado sw_center
 */
-#define LINEA_INT_PIN_14	16	
+#define LINEA_INT_PIN_14	16
+
+// Led RGB
+#define port_led_RGB	2
+#define led_GREEN			2
+#define	led_RED				3
+#define	led_BLUE			1
 
 uint16_t year;
 uint8_t hour, min, sec, date, month;
@@ -71,6 +77,12 @@ time_t tiempo_unix;
 typedef enum {ntp_server, local} estado_rtc_t;		
 estado_rtc_t  estado_rtc;
 
+// Definición del timer para controlar el RGB
+#define time_oneshot_timer_led_rgb 2000
+void callback_Timer_led_rgb (void const *arg);																// prototype for timer callback function
+osTimerDef (one_shot_led, callback_Timer_led_rgb);														// define timer
+osTimerId id_pwd_timer_led_rgb;
+
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /**
@@ -88,18 +100,25 @@ void init_RTC (){
 	LPC_RTC->AMR = 0xFF; // Enmascaradas alarmas RTC
 	LPC_RTC->CALIBRATION = 0x00;
 	
+	// Joystick
 	PIN_Configure(PUERTO_INT, LINEA_INT_PIN_12, PIN_FUNC_0, PIN_PINMODE_PULLDOWN, PIN_PINMODE_NORMAL);
 	PIN_Configure(PUERTO_INT, LINEA_INT_PIN_13, PIN_FUNC_0, PIN_PINMODE_PULLDOWN, PIN_PINMODE_NORMAL);
 	PIN_Configure(PUERTO_INT, LINEA_INT_PIN_15, PIN_FUNC_0, PIN_PINMODE_PULLDOWN, PIN_PINMODE_NORMAL);
 	PIN_Configure(PUERTO_INT, LINEA_INT_PIN_16, PIN_FUNC_0, PIN_PINMODE_PULLDOWN, PIN_PINMODE_NORMAL);
 	PIN_Configure(PUERTO_INT, LINEA_INT_PIN_14, PIN_FUNC_0, PIN_PINMODE_PULLDOWN, PIN_PINMODE_NORMAL);
 	
+	// Led RGB
+	GPIO_SetDir (port_led_RGB, led_RED, GPIO_DIR_OUTPUT);
+	GPIO_SetDir (port_led_RGB, led_GREEN, GPIO_DIR_OUTPUT);
+	GPIO_SetDir (port_led_RGB, led_BLUE, GPIO_DIR_OUTPUT);
+	
 	// Configuración de las interrupciones de hardware
 	//- Indicamos en el registro IO0IntEnR que entradas van a poder generar interrupciones.
 	LPC_GPIOINT->IO0IntEnR = (1<<LINEA_INT_PIN_12) | (1<<LINEA_INT_PIN_13) | (1<<LINEA_INT_PIN_15)| (1<<LINEA_INT_PIN_16) | (1<<LINEA_INT_PIN_14);
 	NVIC_EnableIRQ(EINT3_IRQn);	// Activamos las interruptciones del ENT3 (Asociado al GPIO).
 	
-	
+	// Timer para controlar el encendido del led RGB
+	id_pwd_timer_led_rgb = osTimerCreate(osTimer(one_shot_led), osTimerOnce, (void *)0);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -292,9 +311,11 @@ void rtc_control (void){
 	set_hour_intrrupt (2);
 	get_hora ();
 	get_fecha ();
-	//EscribeLinea_1(hora);
-	//EscribeLinea_2(fecha);
-	//LCD_update();
+	GPIO_PinWrite(port_led_RGB,led_GREEN,1);
+	GPIO_PinWrite(port_led_RGB,led_BLUE,1);
+	GPIO_PinWrite(port_led_RGB,led_RED,1);
+	osTimerStart(id_pwd_timer_led_rgb, time_oneshot_timer_led_rgb);
+	GPIO_PinWrite(port_led_RGB,led_BLUE,0);
 	
 	while (1){
 		
@@ -302,6 +323,9 @@ void rtc_control (void){
 				if (contador == 3){
 						contador = 0;
 						get_time();
+						// Arrancamos el timer one_shot para el led RGB
+						osTimerStart(id_pwd_timer_led_rgb, time_oneshot_timer_led_rgb);
+						GPIO_PinWrite(port_led_RGB,led_BLUE,0);
 					}
 					else {
 					contador++;
@@ -399,4 +423,10 @@ void EINT3_IRQHandler (void){
 		  LPC_GPIOINT->IO0IntClr = 1 << LINEA_INT_PIN_14;
 			signals = osSignalSet (tid_rebotes_joystick, signal_pwd_pulse); 
 	}
+}
+
+void callback_Timer_led_rgb (void const *arg){
+	
+	GPIO_PinWrite(port_led_RGB,led_BLUE,1);
+		
 }
