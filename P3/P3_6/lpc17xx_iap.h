@@ -54,6 +54,11 @@
  * @{
  */
 
+#define FLASH_SECTOR18		0x20000
+#define LEDS_BYTE					0xA
+
+
+
 /**
  * @brief IAP command code definitions
  */
@@ -143,6 +148,8 @@ void InvokeISP(void);
 
 /* Escribir en posiciones de memoria*/
 int escribir_posicion(uint16_t posicion, uint16_t tamanio, uint8_t* dato);
+//Leer una posicion de memoria del sector 18
+uint8_t leer_posicion(uint32_t posicion);
 
 /**
  * @}

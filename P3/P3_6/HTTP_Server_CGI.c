@@ -17,8 +17,9 @@
 #include "PIN_LPC17xx.h"
 #include "LPC17xx.h"
 #include "RTC.h"
-
-
+#ifndef _LPC17xx_IAP_H
+#include "lpc17xx_iap.h"
+#endif
 
 #define PUERTO_LED 			1
 #define LED_1 					18
@@ -30,6 +31,7 @@
 extern uint16_t AD_in (uint32_t ch);
 extern uint8_t  get_button (void);
 extern bool rtc_update;
+extern uint8_t situacion_leds;
 
 // net_sys.c
 extern  LOCALM localm[];
@@ -110,6 +112,7 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
   P2 = 0;
 	GPIO_PortWrite(PUERTO_LED,0x00B40000,P2);
   LEDrun = true;
+	situacion_leds = 0x10;
   if (len == 0) {
     // No data or all items (radio, checkbox) are off
     LED_SetOut (P2);
@@ -123,34 +126,27 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
       // First character is non-null, string exists
       if (strcmp (var, "led0=on") == 0) {
         P2 |= 0x01;
+				situacion_leds |= 0x01;
 				GPIO_PinWrite(PUERTO_LED,LED_1,1);
       }
       else if (strcmp (var, "led1=on") == 0) {
         P2 |= 0x02;
+				situacion_leds |= 0x02;
 				GPIO_PinWrite(PUERTO_LED,LED_2,1);
       }
       else if (strcmp (var, "led2=on") == 0) {
         P2 |= 0x04;
+				situacion_leds |= 0x04;
 				GPIO_PinWrite(PUERTO_LED,LED_3,1);
       }
       else if (strcmp (var, "led3=on") == 0) {
         P2 |= 0x08;
+				situacion_leds |= 0x08;
 				GPIO_PinWrite(PUERTO_LED,LED_4,1);
-      }
-      else if (strcmp (var, "led4=on") == 0) {
-        P2 |= 0x10;
-      }
-      else if (strcmp (var, "led5=on") == 0) {
-        P2 |= 0x20;
-      }
-      else if (strcmp (var, "led6=on") == 0) {
-        P2 |= 0x40;
-      }
-      else if (strcmp (var, "led7=on") == 0) {
-        P2 |= 0x80;
       }
       else if (strcmp (var, "ctrl=Browser") == 0) {
         LEDrun = false;
+				situacion_leds &= 0xEF;
       }
       else if ((strncmp (var, "pw0=", 4) == 0) ||
                (strncmp (var, "pw2=", 4) == 0)) {
@@ -180,6 +176,7 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
       }
     }
   } while (data);
+	escribir_posicion(10,1,&situacion_leds);
 }
 
 // Generate dynamic web data from a script line.

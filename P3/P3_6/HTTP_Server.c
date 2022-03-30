@@ -54,9 +54,8 @@ char buffer_LCD[512];
 char hora [64];
 char fecha [64];
 uint8_t mac_ip[10];
-uint8_t j;
-
-
+uint32_t j;
+uint8_t situacion_leds;
 static void BlinkLed (void const *arg);
 static void RTC (void const *arg);
 
@@ -112,11 +111,18 @@ void dhcp_client_notify (uint32_t if_num,
 static void BlinkLed (void const *arg) {
   const uint32_t led_val[13] = {0x040000,0x140000,0x340000,0xB40000,0xB00000,0xA00000,
 															0x800000,0xA00000,0xB00000,0xB40000,0x340000,0x140000,0x040000};
-	//const uint32_t led_val[13] = {0,0,0,0,0,0,0,0,0,0,0,0,0};
-	
-  int cnt = 0;
-
-  LEDrun = true;
+	int cnt = 0;
+															
+	situacion_leds = leer_posicion(10);															
+  
+	if((situacion_leds&0x10) == 0x10) LEDrun = true;
+  else{
+		LEDrun = false;
+		if((situacion_leds&0x01) == 0x01) GPIO_PinWrite(PUERTO_LED,LED_1,1);
+		if((situacion_leds&0x02) == 0x02) GPIO_PinWrite(PUERTO_LED,LED_2,1);
+		if((situacion_leds&0x04) == 0x04) GPIO_PinWrite(PUERTO_LED,LED_3,1);
+		if((situacion_leds&0x08) == 0x08) GPIO_PinWrite(PUERTO_LED,LED_4,1);
+	}
   while(1) {
     // Every 100 ms
     if (LEDrun == true) {
@@ -161,9 +167,8 @@ int main (void) {
 	for(j=6; j<10; j++){
 		mac_ip[j] = LocM.IpAddr[j-6];
 	}
-
-	escribir_posicion(0,10,mac_ip);
 	
+	escribir_posicion(0,10,mac_ip);
 	
   while(1) {
     net_main ();

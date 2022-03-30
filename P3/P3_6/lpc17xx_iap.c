@@ -40,10 +40,7 @@ IAP iap_entry1 = (IAP) IAP_LOCATION;
 #define FLASH_PROG_AREA_START   0x8000
 #define FLASH_PROG_AREA_SIZE		0x1000
 
-uint8_t buffer[1024];
-
-uint16_t i;
-uint8_t *ptr;
+uint8_t buffer_flash[1024];
 
 
 /** @addtogroup IAP_Public_Functions IAP Public Function
@@ -327,24 +324,34 @@ void InvokeISP(void)
  **********************************************************************/
 int escribir_posicion(uint16_t posicion, uint16_t tamanio, uint8_t* dato)
 {
+	uint16_t i;
+	uint8_t *ptr;
 	int result = 0;
-	
 	if(posicion + tamanio < 1024){
 		for( i = 0; i<1024;i++){
-		ptr = (uint8_t*)(FLASH_PROG_AREA_START+i);
-		buffer[i] = *ptr;
+		ptr = (uint8_t*)(FLASH_SECTOR18+i);
+		buffer_flash[i] = *ptr;
 	}
 	
 	for(i=0; i<tamanio; i++){
-		buffer[i+posicion]= dato[i];
+		buffer_flash[i+posicion]= dato[i];
 	}
-	
-	ptr = (uint8_t*)(FLASH_PROG_AREA_START);
-	CopyRAM2Flash(ptr,buffer,IAP_WRITE_1024); 
+	EraseSector(GetSecNum(FLASH_SECTOR18),GetSecNum(FLASH_SECTOR18));
+	ptr = (uint8_t*)(FLASH_SECTOR18);
+	CopyRAM2Flash(ptr,buffer_flash,IAP_WRITE_1024); 
 	}
 	else result = -1;  
 	
 	return result;
+}
+
+uint8_t leer_posicion(uint32_t posicion){
+	uint8_t *ptr;
+	uint8_t dato[1];
+	ptr = (uint8_t*)(FLASH_SECTOR18+posicion);
+	dato[0] = *ptr;
+	
+	return dato[0];
 }
 /**
  * @}

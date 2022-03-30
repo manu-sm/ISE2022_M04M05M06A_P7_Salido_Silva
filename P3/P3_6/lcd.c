@@ -108,7 +108,7 @@ void retardo_1us (void){
 	while (tic_ena) {
 			if((LPC_TIM0->IR & 0x01) == 0x01){
 				LPC_TIM0->IR |= 1 << 0; 	// Clear MR0 interrupt flag}
-				GPIO_PinWrite (PUERTO_LED, LED_1, 1);
+				//GPIO_PinWrite (PUERTO_LED, LED_1, 1);
 				tic_ena = false;
 			}
 	}	
@@ -130,7 +130,7 @@ void retardo_1ms (void){
 			if((LPC_TIM0->IR & 0x01) == 0x01){
 				LPC_TIM0->IR |= 1 << 0; 	// Clear MR0 interrupt flag}
 				tic_ena = false;
-				GPIO_PinWrite (PUERTO_LED, LED_1, 0);
+				//GPIO_PinWrite (PUERTO_LED, LED_1, 0);
 			}
 	}	
 }
