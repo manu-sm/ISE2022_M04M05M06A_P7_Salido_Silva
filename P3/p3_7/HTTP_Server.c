@@ -125,7 +125,7 @@ static void BlinkLed (void const *arg) {
 															0x800000,0xA00000,0xB00000,0xB40000,0x340000,0x140000,0x040000};
 	int cnt = 0;
 															
-	situacion_leds = leer_posicion(10);															
+	situacion_leds = leer_posicion(11);															
   
 	if((situacion_leds&0x10) == 0x10) LEDrun = true;
   else{
@@ -171,6 +171,8 @@ int main (void) {
 	// Lanzamos el hilo que se encarga de controlar los rebotes
 	Init_rebotes_joystick();
 	/*----------------------------------------------------------------------------------------------------------------*/
+	osDelay(1000);
+	get_time();
 	rtc_update = true;
 	
 	for(j=0; j<6; j++){
@@ -181,7 +183,7 @@ int main (void) {
 	}
 	
 	escribir_posicion(0,10,mac_ip);
-	escribir_posicion(11,1,umbral);
+	escribir_posicion(12,1,umbral);
 	
   while(1) {
     net_main ();

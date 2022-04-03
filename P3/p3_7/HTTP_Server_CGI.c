@@ -176,7 +176,7 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
       }
     }
   } while (data);
-	escribir_posicion(10,1,&situacion_leds);
+	escribir_posicion(11,1,&situacion_leds);
 }
 
 // Generate dynamic web data from a script line.

@@ -16,6 +16,9 @@
 #define SBIT_CCALEN         4    /* RTC Calibration counter enable */
 #define ILR_RTCCIF          0		 /* interrupt RTC counter */
 
+#define ZONA_GMT1						3600
+#define HORARIO_VERANO			3600
+
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* SIGNALS */
 /**
@@ -69,7 +72,7 @@ extern char lcd_text[2][20+1];
 extern osThreadId tid_RTC; 
 
 bool flag_min;
-bool flag_center_joystick;
+
 
 time_t tiempo_unix;
 
@@ -135,7 +138,6 @@ void enable_RTC (){
 	LPC_RTC->CCR |= 1 << SBIT_CLKEN;								// CLK clok enable
 	LPC_RTC->CCR |= 1 << SBIT_CCALEN;
 		
-	get_time();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -276,16 +278,13 @@ static void time_cback (uint32_t time) {
   }
   else {
 		//sprintf (lcd_text[0], "no error");
-		tiempo_unix = time;
+		tiempo_unix = time+ZONA_GMT1+HORARIO_VERANO;
 		convert_unix_to_local (tiempo_unix);
 		set_hour (hour, min, sec);
 		set_date (date, month, year);
 		// Arrancamos el timer one_shot para el led RGB
 		osTimerStart(id_pwd_timer_led_rgb, time_oneshot_timer_led_rgb);
 		GPIO_PinWrite(port_led_RGB,led_BLUE,0);
-		//EscribeLinea_1(hora);
-		//EscribeLinea_2(fecha);
-		//LCD_update();
   }
 }
 
@@ -317,8 +316,7 @@ void rtc_control (void){
 	GPIO_PinWrite(port_led_RGB,led_GREEN,1);
 	GPIO_PinWrite(port_led_RGB,led_BLUE,1);
 	GPIO_PinWrite(port_led_RGB,led_RED,1);
-	osTimerStart(id_pwd_timer_led_rgb, time_oneshot_timer_led_rgb);
-	GPIO_PinWrite(port_led_RGB,led_BLUE,0);
+	
 	
 	while (1){
 		
@@ -337,7 +335,6 @@ void rtc_control (void){
 			if (pulse_pwd_center_event.status == osEventSignal) {
 					set_hour (0, 0, 0);
 					set_date (1, 1, 2020);
-					flag_center_joystick = false;
 					//estado_rtc = local;
 			}
 				

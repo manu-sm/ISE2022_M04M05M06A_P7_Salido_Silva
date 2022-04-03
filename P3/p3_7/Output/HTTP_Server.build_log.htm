@@ -57,32 +57,32 @@ Completed 20 File(s), Ratio 84%
 Note: source file 'RTE\Device\LPC1768\startup_LPC17xx.s' - object file renamed from '.\Output\startup_LPC17xx.o' to '.\Output\startup_lpc17xx_1.o'.
 Note: source file 'RTE\Device\LPC1768\system_LPC17xx.c' - object file renamed from '.\Output\system_LPC17xx.o' to '.\Output\system_lpc17xx_1.o'.
 compiling GLCD_Fonts.c...
-compiling Rebotes_joystick.c...
 compiling lpc17xx_iap.c...
 compiling Web.c...
+compiling GLCD_MCB1700.c...
 compiling potenciometro.c...
+compiling Rebotes_joystick.c...
 compiling LED_MCB1700.c...
+compiling Buttons_MCB1700.c...
+compiling RTX_Conf_CM.c...
 compiling lcd.c...
 lcd.c(62): warning:  #550-D: variable "status"  was set but never used
   		int32_t status;
 lcd.c: 1 warning, 0 errors
-compiling Buttons_MCB1700.c...
-compiling RTX_Conf_CM.c...
-compiling HTTP_Server.c...
-compiling RTC.c...
 compiling PHY_DP83848C.c...
-compiling GLCD_MCB1700.c...
+compiling RTC.c...
 compiling HTTP_Server_CGI.c...
+compiling HTTP_Server.c...
 assembling startup_LPC17xx.s...
 compiling Net_Config.c...
+compiling PIN_LPC17xx.c...
+compiling GPIO_LPC17xx.c...
+compiling system_LPC17xx.c...
 compiling GPDMA_LPC17xx.c...
 compiling EMAC_LPC17xx.c...
-compiling GPIO_LPC17xx.c...
-compiling PIN_LPC17xx.c...
-compiling system_LPC17xx.c...
 compiling SSP_LPC17xx.c...
 linking...
-Program Size: Code=46132 RO-data=33456 RW-data=284 ZI-data=30268  
+Program Size: Code=46104 RO-data=33456 RW-data=284 ZI-data=30268  
 ".\Output\HTTP_Server.axf" - 0 Error(s), 1 Warning(s).
 
 <h2>Software Packages used:</h2>
@@ -170,18 +170,18 @@ Package Vendor: Keil
    * Component: ARM::CMSIS:CORE:5.5.0
 
    * Component: ARM::CMSIS:RTOS:Keil RTX:4.82.0
+      Source file:   CMSIS\RTOS\RTX\UserCodeTemplates\MsgQueue.c
+      Include file:  CMSIS\RTOS\RTX\INC\cmsis_os.h
+      Source file:   CMSIS\RTOS\RTX\UserCodeTemplates\Mutex.c
+      Source file:   CMSIS\RTOS\RTX\Templates\RTX_Conf_CM.c
+      Include file:  CMSIS\RTOS\RTX\UserCodeTemplates\osObjects.h
       Source file:   CMSIS\RTOS\RTX\UserCodeTemplates\main.c
       Source file:   CMSIS\RTOS\RTX\UserCodeTemplates\MailQueue.c
       Source file:   CMSIS\RTOS\RTX\UserCodeTemplates\MemPool.c
-      Include file:  CMSIS\RTOS\RTX\INC\cmsis_os.h
-      Include file:  CMSIS\RTOS\RTX\UserCodeTemplates\osObjects.h
-      Source file:   CMSIS\RTOS\RTX\Templates\RTX_Conf_CM.c
       Source file:   CMSIS\RTOS\RTX\UserCodeTemplates\Semaphore.c
-      Source file:   CMSIS\RTOS\RTX\UserCodeTemplates\MsgQueue.c
       Source file:   CMSIS\RTOS\RTX\UserCodeTemplates\Thread.c
-      Library file:  CMSIS\RTOS\RTX\LIB\ARM\RTX_CM3.lib
       Source file:   CMSIS\RTOS\RTX\SRC\ARM\SVC_Table.s
-      Source file:   CMSIS\RTOS\RTX\UserCodeTemplates\Mutex.c
+      Library file:  CMSIS\RTOS\RTX\LIB\ARM\RTX_CM3.lib
       Source file:   CMSIS\RTOS\RTX\UserCodeTemplates\Timer.c
 
    * Component: Keil.MCB1700::Board Support:Buttons:1.0.0
@@ -197,8 +197,8 @@ Package Vendor: Keil
 
    * Component: Keil.MDK-Pro Net_v6::Network:CORE:Release:6.7.7
       Source file:   Network_v6\Config\Net_Config.c
-      Include file:  Network_v6\Include\rl_net.h
       Library file:  Network_v6\Lib\ARM\Net_CM3_L.lib
+      Include file:  Network_v6\Include\rl_net.h
 
    * Component: Keil.MDK-Pro Net_v6::Network:Interface:ETH:6.7.7
       Include file:  Network_v6\Config\Net_Config_ETH.h
@@ -208,14 +208,14 @@ Package Vendor: Keil
 
    * Component: Keil.MDK-Pro Net_v6::Network:Service:Web Server Compact:6.7.7
       Include file:  Network_v6\Config\Net_Config_HTTP_Server.h
+      Source file:   Network_v6\Template\HTTP_Server_Error.c
+      Source file:   Network_v6\Template\HTTP_Server_Access.c
       Source file:   Network_v6\Template\HTTP_Server_Multiuser.c
       Source file:   Network_v6\Template\HTTP_Server_CGI.c
-      Source file:   Network_v6\Template\HTTP_Server_Access.c
-      Source file:   Network_v6\Template\HTTP_Server_Error.c
 
    * Component: Keil.MDK-Pro Net_v6::Network:Socket:TCP:6.7.7
-      Include file:  Network_v6\Config\Net_Config_TCP.h
       Source file:   Network_v6\Template\TCP_Socket_Client.c
+      Include file:  Network_v6\Config\Net_Config_TCP.h
       Source file:   Network_v6\Template\TCP_Socket_Server.c
 
    * Component: Keil.MDK-Pro Net_v6::Network:Socket:UDP:6.7.7
@@ -232,8 +232,8 @@ Package Vendor: Keil
       Source file:   RTE_Driver\SSP_LPC17xx.c
 
    * Component: Keil::Device:GPDMA:1.2.0
-      Source file:   RTE_Driver\GPDMA_LPC17xx.c
       Include file:  RTE_Driver\GPDMA_LPC17xx.h
+      Source file:   RTE_Driver\GPDMA_LPC17xx.c
 
    * Component: Keil::Device:GPIO:1.1.0
       Include file:  RTE_Driver\GPIO_LPC17xx.h
@@ -244,10 +244,10 @@ Package Vendor: Keil
       Source file:   RTE_Driver\PIN_LPC17xx.c
 
    * Component: Keil::Device:Startup:1.0.0
-      Source file:   Device\Source\ARM\startup_LPC17xx.s
-      Include file:  RTE_Driver\Config\RTE_Device.h
-      Include file:  Device\Include\LPC17xx.h
       Source file:   Device\Source\system_LPC17xx.c
+      Include file:  RTE_Driver\Config\RTE_Device.h
+      Source file:   Device\Source\ARM\startup_LPC17xx.s
+      Include file:  Device\Include\LPC17xx.h
 Build Time Elapsed:  00:00:02
 </pre>
 </body>
