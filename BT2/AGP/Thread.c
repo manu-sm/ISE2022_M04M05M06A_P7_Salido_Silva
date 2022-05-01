@@ -25,21 +25,28 @@
 #define PUERTO_INT_LED			1
 #define PIN_LED_4						23
 
+// Pines para controlar el multiplexor 21, 22, 23
+#define pin_b0_mux					5			// Dip 21
+#define pin_b1_mux					4			// Dip 22
+#define pin_b2_mux					3			// Dip 23
+
+#define gain_1							0
+#define gain_5							1
+#define gain_10							2
+#define gain_50							3
+#define gain_100						4
+
 
 uint32_t addr = LM75B_I2C_ADDR;
 int32_t status = 0, nlect = 0;
 uint8_t cmd, buf[10];
-uint16_t temp;
-float temperatura;
-
+uint16_t comando;
 
 /* I2C driver instance */
 extern ARM_DRIVER_I2C            Driver_I2C2;
 static ARM_DRIVER_I2C *I2Cdrv = &Driver_I2C2;
 
-
 static volatile uint32_t I2C_Event;
-
 
 void Thread (void const *argument);                             // thread function
 osThreadId tid_Thread;                                          // thread id
@@ -102,6 +109,10 @@ void Init_i2c(void){
   status = I2Cdrv->Control      (ARM_I2C_BUS_SPEED, ARM_I2C_BUS_SPEED_STANDARD);
   status = I2Cdrv->Control      (ARM_I2C_BUS_CLEAR, 0);
 	
+	GPIO_SetDir (PUERTO_INT, pin_b0_mux, GPIO_DIR_OUTPUT);
+	GPIO_SetDir (PUERTO_INT, pin_b1_mux, GPIO_DIR_OUTPUT);
+	GPIO_SetDir (PUERTO_INT, pin_b2_mux, GPIO_DIR_OUTPUT);
+
 	
 }
 
@@ -126,34 +137,61 @@ void Thread (void const *argument) {
  
   I2C_Event = 0;
 	
-		// Configuración de las salidas
-	GPIO_SetDir (PUERTO_INT, PIN_INTERRUP_I2C, GPIO_DIR_OUTPUT);
-	GPIO_SetDir (PUERTO_INT_LED, PIN_LED_4, GPIO_DIR_OUTPUT);
-	
   while (1) {
 		
     /* Receive chunk */
     I2Cdrv->SlaveReceive(buf, 1);
 		osSignalWait (SIG_TEMP, osWaitForever); 
 		
-		temp = buf[0];
+		comando = buf[0];
 		
-		// Evaluamos si es necesario ejecutar la interrupción
-		if (buf[0] & 0x04) {
-			GPIO_PinWrite (PUERTO_INT,PIN_INTERRUP_I2C,1);
-			GPIO_PinWrite (PUERTO_INT_LED,PIN_LED_4,1);
-			osDelay (250);
-			GPIO_PinWrite (PUERTO_INT,PIN_INTERRUP_I2C,0);
-			GPIO_PinWrite (PUERTO_INT_LED,PIN_LED_4,0);
-		}
+		// Evaluamos si se va a hacer un cambio en el valor de Overload
+		if (cmd == 1 << 7){}
+		
+		// Evaluamos si se va a desactivar la interrupción de overload
+		else if (cmd == 1 << 6){}
+
+		// Evaluamos la ganancia
 		else {
-			GPIO_PinWrite (PUERTO_INT,PIN_INTERRUP_I2C,0);
+			
+			switch (comando){
+				
+				case gain_1:
+					GPIO_PinWrite (PUERTO_INT,pin_b0_mux,0);
+					GPIO_PinWrite (PUERTO_INT,pin_b1_mux,0);
+					GPIO_PinWrite (PUERTO_INT,pin_b2_mux,0);
+				break;
+				
+				case gain_5:
+					GPIO_PinWrite (PUERTO_INT,pin_b0_mux,1);
+					GPIO_PinWrite (PUERTO_INT,pin_b1_mux,0);
+					GPIO_PinWrite (PUERTO_INT,pin_b2_mux,0);
+				break;
+				
+				case gain_10:
+					GPIO_PinWrite (PUERTO_INT,pin_b0_mux,0);
+					GPIO_PinWrite (PUERTO_INT,pin_b1_mux,1);
+					GPIO_PinWrite (PUERTO_INT,pin_b2_mux,0);
+				break;
+				
+				case gain_50:
+					GPIO_PinWrite (PUERTO_INT,pin_b0_mux,1);
+					GPIO_PinWrite (PUERTO_INT,pin_b1_mux,1);
+					GPIO_PinWrite (PUERTO_INT,pin_b2_mux,0);
+				break;
+				
+				case gain_100:
+					GPIO_PinWrite (PUERTO_INT,pin_b0_mux,0);
+					GPIO_PinWrite (PUERTO_INT,pin_b1_mux,0);
+					GPIO_PinWrite (PUERTO_INT,pin_b2_mux,1);		
+				break;		
+			}
 		}
-		
-		buf[0] = ~buf[0];
+			
+		/*buf[0] = ~buf[0];*/
     /* Transmit chunk back */
-    I2Cdrv->SlaveTransmit(buf,1);
-		osSignalWait (SIG_TEMP, osWaitForever);
+    //I2Cdrv->SlaveTransmit(buf,1);
+		//osSignalWait (SIG_TEMP, osWaitForever);
 		
 		osThreadYield ();                                           // suspend thread
   }
