@@ -27,6 +27,14 @@
 #define LED_3 					21
 #define LED_4 					23
 
+#define EV_GANANCIA_1   0x00
+#define EV_GANANCIA_5   0x01
+#define EV_GANANCIA_10  0x02
+#define EV_GANANCIA_50  0x03
+#define EV_GANANCIA_100 0x04
+
+
+
 // http_server.c
 extern uint16_t AD_in (uint32_t ch);
 extern uint8_t  get_button (void);
@@ -61,13 +69,14 @@ uint8_t ganancia = 1;
 char umbral_OL[3];
 float overload_th;
 bool interrupcion_OL = false;
-
+extern uint8_t num_eventos[1];
 
 // Local variables.
 static uint8_t P2;
 uint16_t hour_date [6];
 char config_text [2][21];
 char umbral_adc[3];
+uint8_t buffer_eventos[8];
 
 // My structure of CGI status variable.
 typedef struct {
@@ -75,6 +84,20 @@ typedef struct {
   uint16_t unused;
 } MY_BUF;
 #define MYBUF(p)        ((MY_BUF *)p)
+
+
+void get_registro_evento(uint8_t evento, uint8_t *buf){
+	
+	buf[0] = evento;
+	buf[1] = get_RTC_param(T_HORA);
+	buf[2] = get_RTC_param(T_MINUTO);
+	buf[3] = get_RTC_param(T_SEGUNDO);
+	buf[4] = get_RTC_param(T_DIA_MES);
+	buf[5] = get_RTC_param(T_MES);
+	buf[6] = get_RTC_param(T_ANIO) >> 8;
+	buf[7] = get_RTC_param(T_ANIO) & 0xFF;
+}
+
 
 // Process query string received by GET request.
 void cgi_process_query (const char *qstr) {
@@ -161,19 +184,49 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
 				GPIO_PinWrite(PUERTO_LED,LED_4,1);
       }
       else if (strcmp (var, "ctrl=1") == 0) {
-        ganancia = 1;
+				if (ganancia != 1){
+					ganancia = 1;
+					get_registro_evento(EV_GANANCIA_1,buffer_eventos);
+					escribir_posicion(num_eventos[0]*8,8,buffer_eventos);
+					if(num_eventos[0]++ == 128) num_eventos[0] = 1 ;
+					escribir_posicion(0,1,num_eventos);
+				}
       }
 			else if (strcmp (var, "ctrl=5") == 0) {
-        ganancia = 5;
+        if (ganancia != 5){
+					ganancia = 5;
+					get_registro_evento(EV_GANANCIA_5,buffer_eventos);
+					escribir_posicion(num_eventos[0]*8,8,buffer_eventos);
+					if(num_eventos[0]++ == 128) num_eventos[0] = 1 ;
+					escribir_posicion(0,1,num_eventos);
+				}
       }
 			else if (strcmp (var, "ctrl=10") == 0) {
-        ganancia = 10;
+        if (ganancia != 10){
+					ganancia = 10;
+					get_registro_evento(EV_GANANCIA_10,buffer_eventos);
+					escribir_posicion(num_eventos[0]*8,8,buffer_eventos);
+					if(num_eventos[0]++ == 128) num_eventos[0] = 1 ;
+					escribir_posicion(0,1,num_eventos);
+				}
       }
 			else if (strcmp (var, "ctrl=50") == 0) {
-        ganancia = 50;
+				if (ganancia != 50){
+					ganancia = 50;
+					get_registro_evento(EV_GANANCIA_50,buffer_eventos);
+					escribir_posicion(num_eventos[0]*8,8,buffer_eventos);
+					if(num_eventos[0]++ == 128) num_eventos[0] = 1 ;
+					escribir_posicion(0,1,num_eventos);
+				}
       }
 			else if (strcmp (var, "ctrl=100") == 0) {
-        ganancia = 100;
+        if (ganancia != 100){
+					ganancia = 100;
+					get_registro_evento(EV_GANANCIA_100,buffer_eventos);
+					escribir_posicion(num_eventos[0]*8,8,buffer_eventos);
+					if(num_eventos[0]++ == 128) num_eventos[0] = 1 ;
+					escribir_posicion(0,1,num_eventos);
+				}
       }
 			else if (strncmp (var, "umbral_OL=", 5) == 0) {
 				// Config Umbral OverLoad
@@ -507,5 +560,6 @@ uint32_t cgi_script (const char *env, char *buf, uint32_t buflen, uint32_t *pcgi
   }
   return (len);
 }
+
 
 

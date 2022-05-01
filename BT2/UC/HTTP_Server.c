@@ -64,6 +64,7 @@ uint8_t situacion_leds;
 uint8_t umbral[1] = {0xA0};
 static void BlinkLed (void const *arg);
 static void RTC (void const *arg);
+uint8_t num_eventos[1] ={1};
 
 osThreadDef(BlinkLed, osPriorityNormal, 1, 0);
 osThreadDef(RTC, osPriorityNormal, 1, 0);
@@ -174,7 +175,8 @@ int main (void) {
 	rtc_update = true;
 	osDelay(1000);
 	get_time();
-	for(j=0; j<6; j++){
+	
+	/*for(j=0; j<6; j++){
 		mac_ip[j] = eth0_config.MacAddr[j];
 	}
 	for(j=6; j<10; j++){
@@ -182,7 +184,7 @@ int main (void) {
 	}
 	
 	escribir_posicion(0,10,mac_ip);
-	escribir_posicion(12,1,umbral);
+	escribir_posicion(12,1,umbral);*/
 	
   while(1) {
     net_main ();

@@ -61,7 +61,7 @@
 
 //     <o>Address byte 3 <0-255>
 //     <i>Default: 0
-#define ETH0_IP3                102
+#define ETH0_IP3                177
 
 //     <o>Address byte 4 <0-255>
 //     <i>Default: 100
@@ -99,11 +99,11 @@
 
 //     <o>Address byte 3 <0-255>
 //     <i>Default: 0
-#define ETH0_GW3                102
+#define ETH0_GW3                177
 
 //     <o>Address byte 4 <0-255>
 //     <i>Default: 254
-#define ETH0_GW4                211
+#define ETH0_GW4                214
 //   </h>
 
 //   <h>Primary DNS Server
