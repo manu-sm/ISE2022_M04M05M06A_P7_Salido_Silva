@@ -160,19 +160,19 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
 				situacion_leds |= 0x08;
 				GPIO_PinWrite(PUERTO_LED,LED_4,1);
       }
-      else if (strcmp (var, "ctrl=G1") == 0) {
+      else if (strcmp (var, "ctrl=1") == 0) {
         ganancia = 1;
       }
-			else if (strcmp (var, "ctrl=G5") == 0) {
+			else if (strcmp (var, "ctrl=5") == 0) {
         ganancia = 5;
       }
-			else if (strcmp (var, "ctrl=G10") == 0) {
+			else if (strcmp (var, "ctrl=10") == 0) {
         ganancia = 10;
       }
-			else if (strcmp (var, "ctrl=G50") == 0) {
+			else if (strcmp (var, "ctrl=50") == 0) {
         ganancia = 50;
       }
-			else if (strcmp (var, "ctrl=G100") == 0) {
+			else if (strcmp (var, "ctrl=100") == 0) {
         ganancia = 100;
       }
 			else if (strncmp (var, "umbral_OL=", 5) == 0) {
@@ -320,13 +320,14 @@ uint32_t cgi_script (const char *env, char *buf, uint32_t buflen, uint32_t *pcgi
         len = sprintf (buf, &env[4], "","","","selected","");
 				}
 				else if (ganancia == 100){
-        len = sprintf (buf, &env[4], "","","","","selected");
+        len = sprintf (buf, &env[4],"","","","","selected");
 				}
-        break;
+				break;
       }
+			
 			if (env[2] == 'd') {
 				len = sprintf (buf, &env[4],umbral_OL);
-        break;
+				break;
       }
 			
 			if (env[2] == 'e') {

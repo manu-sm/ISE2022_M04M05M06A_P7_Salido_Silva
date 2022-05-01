@@ -1,4 +1,4 @@
-t <html><head><title>LED Control</title>
+t <html><head><title>AGP CONFIG</title>
 t <script language=JavaScript>
 t function AllSW(st) {
 t  for(i=0;i<document.form1.length;i++) {
@@ -19,10 +19,10 @@ t  <th width=40%>Item</th>
 t  <th width=60%>Setting</th></tr>
 t <td><img src=pabb.gif>Seleccionar ganancia AGP:</td>
 t <td><select name="ctrl" onchange="submit();">
-c b c <option %s>G1</option><option %s>G5</option><option %s>G10</option><option %s>G50</option>
-t <option %s>G100</option></select></td></tr>
+c b c <option %s>1</option><option %s>5</option><option %s>10</option><option %s>50</option><option %s>100</option>
+t </select></td></tr>
 t <tr><td><img src=pabb.gif>Umbral Overload</TD>
-c b d <td><input type=text name=umbral_OL maxsize= "3" value="%s"></td></tr>
+c b d <td><input type=text name=umbral_OL maxlength= "3" value="%s"></td></tr>
 t <td><img src=pabb.gif>Interrupcion por Overload:</td>
 t <td><select name="ctrl2" onchange="submit();">
 c b e <option %s>Activar</option><option %s>Desactivar</option></select></td></tr>

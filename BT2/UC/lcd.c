@@ -6,6 +6,7 @@
 #include "PIN_LPC17xx.h"
 #include "Arial12x12.h"
 #include <string.h>
+#include <stdio.h>
 
 
 #define gpioPORT_SSP1		0
@@ -20,12 +21,14 @@
 extern ARM_DRIVER_SPI Driver_SPI1;
 ARM_DRIVER_SPI* SPIdrv = &Driver_SPI1;
 
-extern char lcd_text [2][21];
+extern char lcd_text [2][22];
 extern char buffer_LCD [512];
 extern bool LCDupdate;
 uint16_t array_lcd = 0;
 extern char hora [64];
 extern char fecha [64];
+char ganancia_lcd[22];
+extern uint8_t ganancia;
 
 void lcd (void const *argument);                             // thread function
 osThreadId tid_lcd;                                          // thread id
@@ -414,9 +417,10 @@ void lcd (void const *argument) {
 			osDelay (5000);
     }
 		else{
-			for  (array_lcd = 0; array_lcd<20; array_lcd++){
-				lcd_text[0][array_lcd] = hora[array_lcd];
-				lcd_text[1][array_lcd] = fecha[array_lcd];
+			sprintf(ganancia_lcd,"Ganancia: %d",ganancia);
+			for  (array_lcd = 0; array_lcd<22; array_lcd++){
+				lcd_text[0][array_lcd] = fecha[array_lcd];
+				lcd_text[1][array_lcd] = ganancia_lcd[array_lcd];
 				
 			}
 			buffer_clear ();

@@ -205,6 +205,23 @@ void get_fecha (){
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /**
+  \fn          get_fecha (void)
+  \brief       Función que se encarga de leer la fecha del sistema y almacenar el valor en el array @fecha [64]
+*/
+void get_fecha_completa (){
+	  hour = LPC_RTC->HOUR;
+    min  = LPC_RTC->MIN; 
+    sec  = LPC_RTC->SEC; 
+    date  = LPC_RTC->DOM;   
+    month = LPC_RTC->MONTH;  
+    year  = LPC_RTC->YEAR; 
+		
+		sprintf(fecha,"%.2d:%.2d:%.2d - %.2d/%.2d/%4u",hour,min,sec,date,month,year);
+	
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/**
   \fn          get_RTC_param (void)
   \brief       Función que devuelve el dato que se le pide como parametro del RTC
 */
@@ -357,7 +374,7 @@ void rtc_control (void){
 			}
 				
 			get_hora ();
-			get_fecha ();
+			get_fecha_completa ();
 	}	
 }
 
