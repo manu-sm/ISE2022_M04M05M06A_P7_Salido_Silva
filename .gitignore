@@ -52,11 +52,16 @@ Mkfile.old
 dkms.conf
 
 # Other files
-
+*.uvguix
 *.uvguix.*
 /P1/Output
-/P3/Output
-**/Output
+/P3/P3_1/Objects
+/P3/P3_1_sin_problema/Objects
+/P3/P3_2/Objects
+/P3/P3_2_sin_problema/Objects
+**/Objects/*
+**/Listings/*
+**/Output/*
 *.crf
 *.lst
 *.iex
