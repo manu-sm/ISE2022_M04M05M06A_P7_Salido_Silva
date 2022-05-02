@@ -33,7 +33,7 @@ extern uint8_t  get_button (void);
 extern bool rtc_update;
 extern uint8_t situacion_leds;
 
-const char hex[16] = {'0','1','2','3','4','4','6','7','8','9','A','B','C','D','E','F'};
+const char hex[16] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 // net_sys.c
 extern  LOCALM localm[];
 #define LocM   localm[NETIF_ETH]
