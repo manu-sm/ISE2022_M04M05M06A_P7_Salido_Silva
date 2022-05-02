@@ -54,7 +54,7 @@
  * @{
  */
 
-#define FLASH_SECTOR18		0x20000
+#define FLASH_SECTOR19		0x28000
 #define LEDS_BYTE					0xA
 
 

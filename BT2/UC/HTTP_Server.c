@@ -30,6 +30,9 @@
 /*-------------------------------------------------------------------------------------------------------------*/
 #include "rebotes_joystick.h"
 #define signal_pwd_pulse						0x04		// 100
+#define signal_i2c  								0x100		
+
+osEvent	i2c_event;
 /*-------------------------------------------------------------------------------------------------------------*/
 
 #define PUERTO_LED 			1
@@ -37,6 +40,15 @@
 #define LED_2 					20
 #define LED_3 					21
 #define LED_4 					23
+
+#define EV_GANANCIA_1   			0x00
+#define EV_GANANCIA_5   			0x01
+#define EV_GANANCIA_10  			0x02
+#define EV_GANANCIA_50  			0x03
+#define EV_GANANCIA_100 			0x04
+#define EV_CHANGE_OVERLOAD		0X05
+#define EV_INT_OVERLOAD_ON		0x06
+#define EV_INT_OVERLOAD_OFF		0x07
 
 // Led RGB
 #define port_led_RGB	2
@@ -64,10 +76,17 @@ uint8_t situacion_leds;
 uint8_t umbral[1] = {0xA0};
 static void BlinkLed (void const *arg);
 static void RTC (void const *arg);
+static void I2C (void const *arg);
 uint8_t num_eventos[1] ={1};
+
+// Estados.
+uint8_t estado_agp;	
 
 osThreadDef(BlinkLed, osPriorityNormal, 1, 0);
 osThreadDef(RTC, osPriorityNormal, 1, 0);
+
+osThreadId tid_I2C; 
+osThreadDef(I2C, osPriorityNormal, 1, 0);
 
 
 /*----------------------------------------------------------------------------------------------------------------*/
@@ -149,6 +168,54 @@ static void BlinkLed (void const *arg) {
 }
 
 /*----------------------------------------------------------------------------
+  Thread 'I2C': Hilo para controlar el envío de la UC a través del I2C
+ *---------------------------------------------------------------------------*/
+static void I2C (void const *arg){
+
+	while (1) {
+    i2c_event = osSignalWait (signal_i2c, osWaitForever);
+		if (i2c_event.status == osEventSignal){
+			switch (estado_agp){
+			
+				case EV_GANANCIA_1:
+					
+				break;
+				
+				case EV_GANANCIA_5:
+					
+				break;
+				
+				case EV_GANANCIA_10:
+					
+				break;
+				
+				case EV_GANANCIA_50:
+						
+				break;
+				
+				case EV_GANANCIA_100:
+					
+				break;
+				
+				case EV_CHANGE_OVERLOAD:
+					
+				break;
+				
+				/*case EV_INT_OVERLOAD_ON:
+					
+				break;
+				
+				case EV_INT_OVERLOAD_OFF:
+					
+				break;*/
+
+			}
+		}
+    osThreadYield ();                                           // suspend thread
+  }
+}
+
+/*----------------------------------------------------------------------------
   Thread 'RTC': 
  *---------------------------------------------------------------------------*/
 static void RTC (void const *arg) {
@@ -167,6 +234,7 @@ int main (void) {
   net_initialize     ();
 	Init_lcd();
   osThreadCreate (osThread(BlinkLed), NULL);
+	tid_I2C = osThreadCreate (osThread(I2C), NULL);
 	/*----------------------------------------------------------------------------------------------------------------*/
 	tid_RTC = osThreadCreate (osThread(RTC), NULL);
 	// Lanzamos el hilo que se encarga de controlar los rebotes

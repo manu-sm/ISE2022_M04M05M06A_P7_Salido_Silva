@@ -373,7 +373,7 @@ void rtc_control (void){
 					flag_center_joystick = false;
 			}
 				
-			get_hora ();
+			//get_hora ();
 			get_fecha_completa ();
 	}	
 }

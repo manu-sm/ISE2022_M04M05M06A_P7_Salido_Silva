@@ -329,15 +329,15 @@ int escribir_posicion(uint16_t posicion, uint16_t tamanio, uint8_t* dato)
 	int result = 0;
 	if(posicion + tamanio < 1024){
 		for( i = 0; i<1024;i++){
-		ptr = (uint8_t*)(FLASH_SECTOR18+i);
+		ptr = (uint8_t*)(FLASH_SECTOR19+i);
 		buffer_flash[i] = *ptr;
 	}
 	
 	for(i=0; i<tamanio; i++){
 		buffer_flash[i+posicion]= dato[i];
 	}
-	EraseSector(GetSecNum(FLASH_SECTOR18),GetSecNum(FLASH_SECTOR18));
-	ptr = (uint8_t*)(FLASH_SECTOR18);
+	EraseSector(GetSecNum(FLASH_SECTOR19),GetSecNum(FLASH_SECTOR19));
+	ptr = (uint8_t*)(FLASH_SECTOR19);
 	CopyRAM2Flash(ptr,buffer_flash,IAP_WRITE_1024); 
 	}
 	else result = -1;  
@@ -352,15 +352,15 @@ int escribir_posicion_char(uint16_t posicion, uint16_t tamanio, char *dato)
 	int result = 0;
 	if(posicion + tamanio < 1024){
 		for( i = 0; i<1024;i++){
-		ptr = (uint8_t*)(FLASH_SECTOR18+i);
+		ptr = (uint8_t*)(FLASH_SECTOR19+i);
 		buffer_flash[i] = *ptr;
 	}
 	
 	for(i=0; i<tamanio; i++){
 		buffer_flash[i+posicion]= dato[i];
 	}
-	EraseSector(GetSecNum(FLASH_SECTOR18),GetSecNum(FLASH_SECTOR18));
-	ptr = (uint8_t*)(FLASH_SECTOR18);
+	EraseSector(GetSecNum(FLASH_SECTOR19),GetSecNum(FLASH_SECTOR19));
+	ptr = (uint8_t*)(FLASH_SECTOR19);
 	CopyRAM2Flash(ptr,buffer_flash,IAP_WRITE_1024); 
 	}
 	else result = -1;  
@@ -371,7 +371,7 @@ int escribir_posicion_char(uint16_t posicion, uint16_t tamanio, char *dato)
 uint8_t leer_posicion(uint32_t posicion){
 	uint8_t *ptr;
 	uint8_t dato[1];
-	ptr = (uint8_t*)(FLASH_SECTOR18+posicion);
+	ptr = (uint8_t*)(FLASH_SECTOR19+posicion);
 	dato[0] = *ptr;
 	
 	return dato[0];

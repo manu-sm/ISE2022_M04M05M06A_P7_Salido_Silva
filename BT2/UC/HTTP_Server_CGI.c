@@ -13,6 +13,9 @@
 #include "rl_net_lib.h"
 #include "Board_LED.h"
 
+#define osObjectsPublic                     // define objects in main module
+#include <cmsis_os.h>
+
 #include "GPIO_LPC17xx.h"
 #include "PIN_LPC17xx.h"
 #include "LPC17xx.h"
@@ -27,12 +30,16 @@
 #define LED_3 					21
 #define LED_4 					23
 
-#define EV_GANANCIA_1   0x00
-#define EV_GANANCIA_5   0x01
-#define EV_GANANCIA_10  0x02
-#define EV_GANANCIA_50  0x03
-#define EV_GANANCIA_100 0x04
+#define EV_GANANCIA_1   			0x00
+#define EV_GANANCIA_5   			0x01
+#define EV_GANANCIA_10  			0x02
+#define EV_GANANCIA_50  			0x03
+#define EV_GANANCIA_100 			0x04
+#define EV_CHANGE_OVERLOAD		0X05
+#define EV_INT_OVERLOAD_ON		0x06
+#define EV_INT_OVERLOAD_OFF		0x07
 
+#define signal_i2c  					0x100
 
 
 // http_server.c
@@ -40,6 +47,7 @@ extern uint16_t AD_in (uint32_t ch);
 extern uint8_t  get_button (void);
 extern bool rtc_update;
 extern uint8_t situacion_leds;
+extern uint8_t estado_agp;	
 
 const char hex[16] = {'0','1','2','3','4','4','6','7','8','9','A','B','C','D','E','F'};
 // net_sys.c
@@ -66,10 +74,11 @@ bool borrado_flash;
 char contenido_memoria[210];
 char lectura_memoria[70];
 uint8_t ganancia = 1;
-char umbral_OL[3];
-float overload_th;
+char umbral_OL[4] = {0,0,0,0};
+uint8_t overload_th = 0;
 bool interrupcion_OL = false;
 extern uint8_t num_eventos[1];
+extern osThreadId tid_I2C; 
 
 // Local variables.
 static uint8_t P2;
@@ -163,7 +172,7 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
     data = http_get_env_var (data, var, sizeof (var));
     if (var[0] != 0) {
       // First character is non-null, string exists
-      if (strcmp (var, "led0=on") == 0) {
+      /*if (strcmp (var, "led0=on") == 0) {
         P2 |= 0x01;
 				situacion_leds |= 0x01;
 				GPIO_PinWrite(PUERTO_LED,LED_1,1);
@@ -182,19 +191,23 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
         P2 |= 0x08;
 				situacion_leds |= 0x08;
 				GPIO_PinWrite(PUERTO_LED,LED_4,1);
-      }
-      else if (strcmp (var, "ctrl=1") == 0) {
+      }*/
+      if (strcmp (var, "ctrl=1") == 0) {
 				if (ganancia != 1){
 					ganancia = 1;
 					get_registro_evento(EV_GANANCIA_1,buffer_eventos);
 					escribir_posicion(num_eventos[0]*8,8,buffer_eventos);
 					if(num_eventos[0]++ == 128) num_eventos[0] = 1 ;
 					escribir_posicion(0,1,num_eventos);
+					osSignalSet (tid_I2C, signal_i2c);
+					estado_agp = EV_GANANCIA_1;
 				}
       }
 			else if (strcmp (var, "ctrl=5") == 0) {
-        if (ganancia != 5){
+				if (ganancia != 5){
+					estado_agp =EV_GANANCIA_5;
 					ganancia = 5;
+					osSignalSet (tid_I2C, signal_i2c);
 					get_registro_evento(EV_GANANCIA_5,buffer_eventos);
 					escribir_posicion(num_eventos[0]*8,8,buffer_eventos);
 					if(num_eventos[0]++ == 128) num_eventos[0] = 1 ;
@@ -203,49 +216,69 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
       }
 			else if (strcmp (var, "ctrl=10") == 0) {
         if (ganancia != 10){
+					estado_agp =EV_GANANCIA_10;
 					ganancia = 10;
 					get_registro_evento(EV_GANANCIA_10,buffer_eventos);
 					escribir_posicion(num_eventos[0]*8,8,buffer_eventos);
 					if(num_eventos[0]++ == 128) num_eventos[0] = 1 ;
 					escribir_posicion(0,1,num_eventos);
+					osSignalSet (tid_I2C, signal_i2c);
 				}
       }
 			else if (strcmp (var, "ctrl=50") == 0) {
 				if (ganancia != 50){
+					estado_agp = EV_GANANCIA_50;
 					ganancia = 50;
 					get_registro_evento(EV_GANANCIA_50,buffer_eventos);
 					escribir_posicion(num_eventos[0]*8,8,buffer_eventos);
 					if(num_eventos[0]++ == 128) num_eventos[0] = 1 ;
 					escribir_posicion(0,1,num_eventos);
+					osSignalSet (tid_I2C, signal_i2c);
 				}
       }
 			else if (strcmp (var, "ctrl=100") == 0) {
         if (ganancia != 100){
+					estado_agp = EV_GANANCIA_100;
 					ganancia = 100;
 					get_registro_evento(EV_GANANCIA_100,buffer_eventos);
 					escribir_posicion(num_eventos[0]*8,8,buffer_eventos);
 					if(num_eventos[0]++ == 128) num_eventos[0] = 1 ;
 					escribir_posicion(0,1,num_eventos);
+					osSignalSet (tid_I2C, signal_i2c);
 				}
       }
 			else if (strncmp (var, "umbral_OL=", 5) == 0) {
+				
 				// Config Umbral OverLoad
 				strcpy (umbral_OL, var + 10);
-				/*if (umbral_OL[0]> 255 ){
-					umbral_OL[0] = 255;
-				}*/
-				if(umbral_OL[0] != 0){
-					overload_th = umbral_OL[0] - '0';
-					if(umbral_OL[1] != 0){
-						if(umbral_OL[2] != 0) overload_th += (umbral_OL[2] - '0')*0.1;
+				if(overload_th != ((umbral_OL[0] - '0')*10 + umbral_OL[2] - '0')){
+					if(umbral_OL[0] != 0){
+						overload_th = (umbral_OL[0] - '0')*10;
+						if(umbral_OL[1] != 0){
+							if(umbral_OL[2] != 0) overload_th += (umbral_OL[2] - '0');
+						}
 					}
-				} 
+					get_registro_evento(overload_th|0x80,buffer_eventos);
+					escribir_posicion(num_eventos[0]*8,8,buffer_eventos);
+					if(num_eventos[0]++ == 128) num_eventos[0] = 1 ;
+					escribir_posicion(0,1,num_eventos);
+					estado_agp = EV_CHANGE_OVERLOAD;
+					osSignalSet (tid_I2C, signal_i2c);
+				}
       }
 			else if (strcmp (var, "ctrl2=Activar") == 0) {
-        interrupcion_OL = true;
+        if(interrupcion_OL == false){
+					interrupcion_OL = true;
+					/*estado_agp = EV_INT_OVERLOAD_ON;
+					osSignalSet (tid_I2C, signal_i2c);*/
+				}
       }
 			else if (strcmp (var, "ctrl2=Desactivar") == 0) {
-        interrupcion_OL = false;
+				if(interrupcion_OL == true){
+					interrupcion_OL = false;
+					/*estado_agp = EV_INT_OVERLOAD_OFF;
+					osSignalSet (tid_I2C, signal_i2c);*/
+				}
       }
       else if ((strncmp (var, "pw0=", 4) == 0) ||
                (strncmp (var, "pw2=", 4) == 0)) {
