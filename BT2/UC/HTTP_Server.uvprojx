@@ -563,6 +563,16 @@
               <FileType>9</FileType>
               <FilePath>.\Web\config.cgi</FilePath>
             </File>
+            <File>
+              <FileName>overload.cgi</FileName>
+              <FileType>9</FileType>
+              <FilePath>.\Web\overload.cgi</FilePath>
+            </File>
+            <File>
+              <FileName>agp.cgi</FileName>
+              <FileType>9</FileType>
+              <FilePath>.\Web\agp.cgi</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1148,6 +1158,16 @@
               <FileName>config.cgi</FileName>
               <FileType>9</FileType>
               <FilePath>.\Web\config.cgi</FilePath>
+            </File>
+            <File>
+              <FileName>overload.cgi</FileName>
+              <FileType>9</FileType>
+              <FilePath>.\Web\overload.cgi</FilePath>
+            </File>
+            <File>
+              <FileName>agp.cgi</FileName>
+              <FileType>9</FileType>
+              <FilePath>.\Web\agp.cgi</FilePath>
             </File>
           </Files>
         </Group>

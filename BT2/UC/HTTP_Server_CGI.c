@@ -77,6 +77,7 @@ uint8_t ganancia = 1;
 char umbral_OL[4] = {0,0,0,0};
 uint8_t overload_th = 0;
 bool interrupcion_OL = false;
+bool estado_OL = false;
 extern uint8_t num_eventos[1];
 extern osThreadId tid_I2C; 
 
@@ -562,7 +563,12 @@ uint32_t cgi_script (const char *env, char *buf, uint32_t buflen, uint32_t *pcgi
       adv = AD_in (0);
       len = sprintf (buf, &env[1], adv);
       break;
-
+		
+		case 'l':			
+      // Overload State
+			len = sprintf (buf, &env[4],estado_OL ?     "True"     : "False");
+      break;
+		
     case 'y':
       // Button state from 'button.cgx'
       len = sprintf (buf, "<checkbox><id>button%c</id><on>%s</on></checkbox>",

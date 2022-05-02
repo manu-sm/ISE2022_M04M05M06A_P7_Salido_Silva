@@ -18,5 +18,7 @@ llblue.jpg,
 logo.gif,
 pabb.gif,
 time.cgi,
-config.cgi 
+config.cgi,
+overload.cgi,
+agp.cgi 
 TO Web.c RTE NOPRINT ROOT(Web)
