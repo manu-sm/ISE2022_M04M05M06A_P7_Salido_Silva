@@ -49,7 +49,7 @@ extern bool rtc_update;
 extern uint8_t situacion_leds;
 extern uint8_t estado_agp;	
 
-const char hex[16] = {'0','1','2','3','4','4','6','7','8','9','A','B','C','D','E','F'};
+const char hex[16] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 // net_sys.c
 extern  LOCALM localm[];
 #define LocM   localm[NETIF_ETH]
@@ -87,6 +87,8 @@ uint16_t hour_date [6];
 char config_text [2][21];
 char umbral_adc[3];
 uint8_t buffer_eventos[8];
+uint8_t registro_leido = 1;
+char registro_pedido[3] = {1,0,0};
 
 // My structure of CGI status variable.
 typedef struct {
@@ -281,6 +283,15 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
 					osSignalSet (tid_I2C, signal_i2c);*/
 				}
       }
+			else if (strncmp (var, "num_reg=",6) == 0) {
+				strcpy (registro_pedido, var+8);
+				if((registro_pedido[2]!=0 && registro_pedido[1]!=0 && registro_pedido[0]!=0))
+					registro_leido = (registro_pedido[0] - '0')*100 + (registro_pedido[1] - '0')*10 + (registro_pedido[2] - '0');
+				else if((registro_pedido[0]!=0 && registro_pedido[1]!=0 && registro_pedido[2]==0))
+					registro_leido = (registro_pedido[0] - '0')*10 + (registro_pedido[1] - '0');
+				else if((registro_pedido[0]!=0 && registro_pedido[1]==0 && registro_pedido[2]==0))
+					registro_leido = (registro_pedido[0] - '0');
+      }
       else if ((strncmp (var, "pw0=", 4) == 0) ||
                (strncmp (var, "pw2=", 4) == 0)) {
         // Change password, retyped password
@@ -293,18 +304,6 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
             strcpy (http_auth_passw, passw);
           }
         }
-      }
-      else if (strncmp (var, "lcd1=", 5) == 0) {
-        // LCD Module line 1 text
-        strcpy (lcd_text[0], var+5);
-				escribir_posicion_char(13,21,&lcd_text[0][0]);
-        LCDupdate = true;
-      }
-      else if (strncmp (var, "lcd2=", 5) == 0) {
-        // LCD Module line 2 text
-        strcpy (lcd_text[1], var+5);
-				escribir_posicion_char(34,21,&lcd_text[1][0]);
-        LCDupdate = true;
       }
 			else if (strncmp (var, "hora=", 5) == 0) {
         // Config hora text
@@ -330,11 +329,11 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
 			else if (strcmp (var, "sntp_2=on") == 0) {
 				SNTP_server = true;
       }
-			else if (strcmp (var, "erase_flash=on") == 0) {
+			/*else if (strcmp (var, "erase_flash=on") == 0) {
 				borrado_flash = true;
 				EraseSector(18,18);
 				borrado_flash = false;
-      }
+      }*/
 			else if (strncmp (var, "umbral_adc=", 5) == 0) {
 				// Config adc umbral
 				strcpy (umbral_adc, var + 11);
@@ -354,17 +353,17 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
 
 // Generate dynamic web data from a script line.
 uint32_t cgi_script (const char *env, char *buf, uint32_t buflen, uint32_t *pcgi) {
-  TCP_INFO *tsoc;
-  const char *lang;
+  //TCP_INFO *tsoc;
+  //const char *lang;
   uint32_t len = 0;
-  uint8_t id;
-  static uint32_t adv;
+  //uint8_t id;
+  //static uint32_t adv;
 	uint32_t segundo_, minuto_, hora_, dia_, mes_, anio_;
 	uint32_t k;
 	
   switch (env[0]) {
     // Analyze a 'c' script line starting position 2
-    case 'a' :
+    /*case 'a' :
       // Network parameters from 'network.cgi'
       switch (env[2]) {
         case 'i':
@@ -388,10 +387,10 @@ uint32_t cgi_script (const char *env, char *buf, uint32_t buflen, uint32_t *pcgi
           len = sprintf (buf, &env[4], ip4_ntoa (LocM.SecDNS));
           break;
       }
-      break;
+      break;*/
 
     case 'b':
-      // LED control from 'led.cgi'
+      // AGP control by "agp.cgi'
       if (env[2] == 'c') {
         // Select Control
 				if (ganancia == 1){
@@ -423,89 +422,25 @@ uint32_t cgi_script (const char *env, char *buf, uint32_t buflen, uint32_t *pcgi
 				else len = sprintf (buf, &env[4], "","selected");
 				break;
 			}
-
-
-    case 'c':
-      // TCP status from 'tcp.cgi'
-      while ((len + 150) < buflen) {
-        tsoc = &tcp_socket[MYBUF(pcgi)->xcnt];
-        MYBUF(pcgi)->xcnt++;
-        // 'sprintf' format string is defined here
-        len += sprintf (buf+len,   "<tr align=\"center\">");
-        if (tsoc->State <= tcpStateCLOSED) {
-          len += sprintf (buf+len, "<td>%d</td><td>%s</td><td>-</td><td>-</td>"
-                                   "<td>-</td><td>-</td></tr>\r\n",
-                                   MYBUF(pcgi)->xcnt,tcp_ntoa(tsoc->State));
-        }
-        else if (tsoc->State == tcpStateLISTEN) {
-          len += sprintf (buf+len, "<td>%d</td><td>%s</td><td>%d</td><td>-</td>"
-                                   "<td>-</td><td>-</td></tr>\r\n",
-                                   MYBUF(pcgi)->xcnt, tcp_ntoa(tsoc->State), tsoc->LocPort);
-        }
-        else {
-          len += sprintf (buf+len, "<td>%d</td><td>%s</td><td>%d</td>"
-                                   "<td>%d</td><td>%s</td><td>%d</td></tr>\r\n",
-                                   MYBUF(pcgi)->xcnt, tcp_ntoa(tsoc->State), tsoc->LocPort,
-                                   tsoc->AliveTimer, ip4_ntoa (tsoc->RemAddr), tsoc->RemPort);
-        }
-        // Repeat for all TCP Sockets
-        if (MYBUF(pcgi)->xcnt == tcp_NumSocks) {
-          break;
-        }
-      }
-      if (MYBUF(pcgi)->xcnt < tcp_NumSocks) {
-        // Hi bit is a repeat flag
-        len |= (1u << 31);
-      }
-      break;
-
-    case 'd':
-      // System password from 'system.cgi'
-      switch (env[2]) {
-        case '1':
-          len = sprintf (buf, &env[4], http_EnAuth ? "Enabled" : "Disabled");
-          break;
-        case '2':
-          len = sprintf (buf, &env[4], http_auth_passw);
-          break;
-      }
-      break;
-
-    case 'e':
-      // Browser Language from 'language.cgi'
-      lang = http_server_get_lang ();
-      if      (strncmp (lang, "en", 2) == 0) {
-        lang = "English";
-      }
-      else if (strncmp (lang, "de", 2) == 0) {
-        lang = "German";
-      }
-      else if (strncmp (lang, "fr", 2) == 0) {
-        lang = "French";
-      }
-      else if (strncmp (lang, "sl", 2) == 0) {
-        lang = "Slovene";
-      }
-      else {
-        lang = "Unknown";
-      }
-      len = sprintf (buf, &env[2], lang, http_server_get_lang());
-      break;
-
-    case 'f':
-      // LCD Module control from 'lcd.cgi'
-      switch (env[2]) {
-        case '1':
-          len = sprintf (buf, &env[4], lcd_text[0]);
-					rtc_update = false;
-          break;
-        case '2':
-          len = sprintf (buf, &env[4], lcd_text[1]);
-					rtc_update = false;
-          break;
-      }
-      break;
 		
+		case 'd':
+			// Config
+			switch (env[2]) {
+				case '1':
+					len = sprintf (buf, &env[4],registro_leido);
+				break;
+				case '2':
+					for(k = 0; k<8; k++){
+						lectura_memoria[k] = leer_posicion(registro_leido*8+k);
+						contenido_memoria[3*k] = hex[(lectura_memoria[k] >> 4)];
+						contenido_memoria[3*k+1] =hex[(lectura_memoria[k] & 0x0F)];
+						contenido_memoria[3*k+2] =' ';
+					}
+					len = sprintf (buf, &env[4],contenido_memoria);
+				break;
+      }		
+			break;
+			
 		case 'i':
 			// Config
 			switch (env[2]) {
@@ -526,7 +461,7 @@ uint32_t cgi_script (const char *env, char *buf, uint32_t buflen, uint32_t *pcgi
 				case '5':
 					len = sprintf (buf, &env[4],SNTP_server ?     "selected"     : "");
 				break;
-				case '6':
+				/*case '6':
 					len = sprintf (buf, &env[4],borrado_flash ?     "selected"     : "");
 				break;
 				case '7':
@@ -537,42 +472,13 @@ uint32_t cgi_script (const char *env, char *buf, uint32_t buflen, uint32_t *pcgi
 						contenido_memoria[3*k+2] =' ';
 					}
 					len = sprintf (buf, &env[4],contenido_memoria);
-				break;
+				break;*/
       }		
 			break;
-
-    case 'g':
-      // AD Input from 'ad.cgi'
-      switch (env[2]) {
-        case '1':
-          adv = AD_in (0);
-          len = sprintf (buf, &env[4], adv);
-          break;
-        case '2':
-          len = sprintf (buf, &env[4], (float)adv*3.3f/4096);
-          break;
-        case '3':
-          adv = (adv * 100) / 4096;
-          len = sprintf (buf, &env[4], adv);
-          break;
-      }
-      break;
-
-    case 'x':
-      // AD Input from 'ad.cgx'
-      adv = AD_in (0);
-      len = sprintf (buf, &env[1], adv);
-      break;
-		
+	
 		case 'l':			
       // Overload State
 			len = sprintf (buf, &env[4],estado_OL ?     "True"     : "False");
-      break;
-		
-    case 'y':
-      // Button state from 'button.cgx'
-      len = sprintf (buf, "<checkbox><id>button%c</id><on>%s</on></checkbox>",
-                     env[1], (get_button () & (1 << (env[1]-'0'))) ? "true" : "false");
       break;
 		
 		case 'h':
@@ -590,6 +496,9 @@ uint32_t cgi_script (const char *env, char *buf, uint32_t buflen, uint32_t *pcgi
           break;
         case '2':
           len = sprintf (buf, &env[4], dia_, mes_, anio_);
+          break;
+				case '3':
+          len = sprintf (buf, &env[4],"");
           break;
 				
       }		

@@ -65,6 +65,9 @@ uint8_t hour, min, sec, date, month;
 
 uint8_t prueba = 2;
 
+//Prueba Overload
+extern bool estado_OL;
+
 extern char hora [64];
 extern char fecha [64];
 extern char lcd_text[2][20+1];
@@ -371,6 +374,7 @@ void rtc_control (void){
 					set_hour (0, 0, 0);
 					set_date (1, 1, 2020);
 					flag_center_joystick = false;
+					estado_OL = !estado_OL;
 			}
 				
 			//get_hora ();

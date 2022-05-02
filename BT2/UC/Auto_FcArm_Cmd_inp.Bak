@@ -20,5 +20,6 @@ pabb.gif,
 time.cgi,
 config.cgi,
 overload.cgi,
-agp.cgi 
+agp.cgi,
+flash.cgi 
 TO Web.c RTE NOPRINT ROOT(Web)

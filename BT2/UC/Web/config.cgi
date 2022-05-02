@@ -18,12 +18,12 @@ t <tr><td><img src=pabb.gif>Seleccion SNTP 1</TD>
 c i 4 <td><input type=checkbox name=sntp_1 OnClick="submit();" %s>SNTP: Rediris 130.266.0.1 (Madrid)</td></tr>
 t <tr><td><img src=pabb.gif>Seleccion SNTP 2</TD>
 c i 5 <td><input type=checkbox name=sntp_2 OnClick="submit();" %s>SNTP: IMDEA 193.147.107.33 (Pozuelo)</td></tr>
-t <tr><td><img src=pabb.gif>Borrar Flash.</TD>
-c i 6 <td><input type=checkbox name=erase_flash OnClick="submit();" %s>Borrar Flash (Sector 18)</td></tr>
+#t <tr><td><img src=pabb.gif>Borrar Flash.</TD>
+#c i 6 <td><input type=checkbox name=erase_flash OnClick="submit();" %s>Borrar Flash (Sector 18)</td></tr>
 #t <tr><td><img src=pabb.gif>Fecha</TD>
 #c i	7 <td>%s</td></tr>
-t <tr><td><img src=pabb.gif>Sector 18</td>
-c i 7 <td><input type=textarea name=flash_read size=192 maxlength=192 value="%s" readonly></td></tr>
+#t <tr><td><img src=pabb.gif>Sector 18</td>
+#c i 7 <td><input type=textarea name=flash_read size=192 maxlength=192 value="%s" readonly></td></tr>
 t </font></table>
 # Here begin button definitions
 t <p align=center>

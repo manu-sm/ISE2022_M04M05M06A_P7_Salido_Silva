@@ -13,7 +13,7 @@ t <tr><td><img src=pabb.gif>Hora</td>
 c h 1 <td>%2.2d:%2.2d:%2.2d</td></tr>
 t <tr><td><img src=pabb.gif>Fecha</TD>
 c h	2 <td>%2.2d/%2.2d/%4u</td></tr>
-c b 0 <td><input type=checkbox name=update OnClick="submit();" %s>Actualizar hora</td>
+c h 3 <td><input type=checkbox name=update OnClick="submit();" %s>Actualizar hora</td>
 t </font></table>
 #t <p><img src=pabb.gif>Hora y fecha</p>
 #c h <p><input type=text name=hora value="%2.2d:%2.2d:%2.2d   %2.2d/%2.2d/%4u"></p>

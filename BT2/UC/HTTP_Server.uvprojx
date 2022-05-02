@@ -573,6 +573,11 @@
               <FileType>9</FileType>
               <FilePath>.\Web\agp.cgi</FilePath>
             </File>
+            <File>
+              <FileName>flash.cgi</FileName>
+              <FileType>9</FileType>
+              <FilePath>.\Web\flash.cgi</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1168,6 +1173,11 @@
               <FileName>agp.cgi</FileName>
               <FileType>9</FileType>
               <FilePath>.\Web\agp.cgi</FilePath>
+            </File>
+            <File>
+              <FileName>flash.cgi</FileName>
+              <FileType>9</FileType>
+              <FilePath>.\Web\flash.cgi</FilePath>
             </File>
           </Files>
         </Group>
