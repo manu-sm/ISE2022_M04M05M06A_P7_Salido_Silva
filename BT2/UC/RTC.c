@@ -9,6 +9,7 @@
 #include "time.h"
 #include "lcd.h"
 #include "rebotes_joystick.h"
+#include "lpc17xx_iap.h"
 
 #define RTC_POWER_CONTROL		9		 /* Power control RTC*/
 #define SBIT_CLKEN     			0    /* RTC Clock Enable*/
@@ -32,27 +33,13 @@ extern osThreadId tid_rebotes_joystick;
 /**
 *	Puerto de entrada al que esta conectado el joystick
 */
-#define PUERTO_INT	0
-/**
-*	Puerto 0.17 ==> Pin 12 al que esta conectado sw_down
-*/
-#define LINEA_INT_PIN_12	17		
-/**
-*	Puerto 0.15 ==> Pin 13 al que esta conectado sw_left
-*/
-#define LINEA_INT_PIN_13	15	
-/**
-*	Puerto 0.23 ==> Pin 15 al que esta conectado sw_up
-*/
-#define LINEA_INT_PIN_15	23			
-/**
-*	Puerto 0.24 ==> Pin 16 al que esta conectado sw_right
-*/
-#define LINEA_INT_PIN_16	24			
+#define PUERTO_INT	0			
 /**
 *	Puerto 0.16 ==> Pin 14 al que esta conectado sw_center
 */
 #define LINEA_INT_PIN_14	16
+//Interrupción Overload DIP 29
+#define INT_OVERLOAD			5
 
 // Led RGB
 #define port_led_RGB	2
@@ -67,6 +54,10 @@ uint8_t prueba = 2;
 
 //Prueba Overload
 extern bool estado_OL;
+bool registrar_OL = false;
+extern uint8_t num_eventos[1];
+extern uint8_t buffer_eventos[8];
+extern uint8_t overload_th;
 
 extern char hora [64];
 extern char fecha [64];
@@ -90,6 +81,27 @@ void callback_Timer_led_rgb (void const *arg);																// prototype for t
 osTimerDef (one_shot_led, callback_Timer_led_rgb);														// define timer
 osTimerId id_pwd_timer_led_rgb;
 
+// Definición del timer para controlar la interrupcion
+#define time_oneshot_timer_int 100
+void callback_Timer_int (void const *arg);																// prototype for timer callback function
+osTimerDef (one_shot_int, callback_Timer_int);														// define timer
+osTimerId id_pwd_timer_int;
+
+
+
+void get_registro_evento(uint8_t evento, uint8_t *buf){
+	
+	buf[0] = evento;
+	buf[1] = get_RTC_param(T_HORA);
+	buf[2] = get_RTC_param(T_MINUTO);
+	buf[3] = get_RTC_param(T_SEGUNDO);
+	buf[4] = get_RTC_param(T_DIA_MES);
+	buf[5] = get_RTC_param(T_MES);
+	buf[6] = get_RTC_param(T_ANIO) >> 8;
+	buf[7] = get_RTC_param(T_ANIO) & 0xFF;
+}
+
+
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /**
@@ -108,10 +120,10 @@ void init_RTC (){
 	LPC_RTC->CALIBRATION = 0x00;
 	
 	// Joystick
-	PIN_Configure(PUERTO_INT, LINEA_INT_PIN_12, PIN_FUNC_0, PIN_PINMODE_PULLDOWN, PIN_PINMODE_NORMAL);
+	/*PIN_Configure(PUERTO_INT, LINEA_INT_PIN_12, PIN_FUNC_0, PIN_PINMODE_PULLDOWN, PIN_PINMODE_NORMAL);
 	PIN_Configure(PUERTO_INT, LINEA_INT_PIN_13, PIN_FUNC_0, PIN_PINMODE_PULLDOWN, PIN_PINMODE_NORMAL);
 	PIN_Configure(PUERTO_INT, LINEA_INT_PIN_15, PIN_FUNC_0, PIN_PINMODE_PULLDOWN, PIN_PINMODE_NORMAL);
-	PIN_Configure(PUERTO_INT, LINEA_INT_PIN_16, PIN_FUNC_0, PIN_PINMODE_PULLDOWN, PIN_PINMODE_NORMAL);
+	PIN_Configure(PUERTO_INT, LINEA_INT_PIN_16, PIN_FUNC_0, PIN_PINMODE_PULLDOWN, PIN_PINMODE_NORMAL);*/
 	PIN_Configure(PUERTO_INT, LINEA_INT_PIN_14, PIN_FUNC_0, PIN_PINMODE_PULLDOWN, PIN_PINMODE_NORMAL);
 	
 	// Led RGB
@@ -121,11 +133,13 @@ void init_RTC (){
 	
 	// Configuración de las interrupciones de hardware
 	//- Indicamos en el registro IO0IntEnR que entradas van a poder generar interrupciones.
-	LPC_GPIOINT->IO0IntEnR = (1<<LINEA_INT_PIN_12) | (1<<LINEA_INT_PIN_13) | (1<<LINEA_INT_PIN_15)| (1<<LINEA_INT_PIN_16) | (1<<LINEA_INT_PIN_14);
+	LPC_GPIOINT->IO0IntEnR = (1 << INT_OVERLOAD) | (1<<LINEA_INT_PIN_14);
+	LPC_GPIOINT->IO0IntEnF = (1 << INT_OVERLOAD);
 	NVIC_EnableIRQ(EINT3_IRQn);	// Activamos las interruptciones del ENT3 (Asociado al GPIO).
 	
 	// Timer para controlar el encendido del led RGB
 	id_pwd_timer_led_rgb = osTimerCreate(osTimer(one_shot_led), osTimerOnce, (void *)0);
+	id_pwd_timer_int = osTimerCreate(osTimer(one_shot_int), osTimerOnce, (void*)0);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -157,8 +171,7 @@ void set_hour (uint8_t hora_, uint8_t minuto_, uint8_t segundo_){
 	
 		LPC_RTC->HOUR   = hora_;   	// Update hour value 
 		LPC_RTC->MIN    = minuto_;   // Update min value
-		LPC_RTC->SEC    = segundo_;  // Update sec value
-		
+		LPC_RTC->SEC    = segundo_;  // Update sec value	
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -376,6 +389,14 @@ void rtc_control (void){
 					flag_center_joystick = false;
 					estado_OL = !estado_OL;
 			}
+			
+			if(registrar_OL){
+				registrar_OL = false;
+				get_registro_evento(overload_th|0x80,buffer_eventos);
+				escribir_posicion(num_eventos[0]*8,8,buffer_eventos);
+				if(num_eventos[0]++ == 128) num_eventos[0] = 1 ;
+				escribir_posicion(0,1,num_eventos);
+			}
 				
 			//get_hora ();
 			get_fecha_completa ();
@@ -398,35 +419,37 @@ void RTC_IRQHandler(void){
 *		que boton es el que se ha pulsado.
 */
 void EINT3_IRQHandler (void){
-	// Pulsación del botón derecho
-	if (LPC_GPIOINT->IO0IntStatR == 1 << LINEA_INT_PIN_16) {
-		  LPC_GPIOINT->IO0IntClr = 1 << LINEA_INT_PIN_16;
-			signals = osSignalSet (tid_rebotes_joystick, signal_pwd_pulse); 										
-	}
-	// Pulsación del botón izquierdo
-	else if (LPC_GPIOINT->IO0IntStatR == 1 << LINEA_INT_PIN_13){
-		  LPC_GPIOINT->IO0IntClr = 1 << LINEA_INT_PIN_13;
-			signals = osSignalSet (tid_rebotes_joystick, signal_pwd_pulse); 
-	}
-	// Pulsación del botón de arriba
-	else if (LPC_GPIOINT->IO0IntStatR == 1 << LINEA_INT_PIN_15) {
-		  LPC_GPIOINT->IO0IntClr = 1 << LINEA_INT_PIN_15;
-			signals = osSignalSet (tid_rebotes_joystick, signal_pwd_pulse); 
-	}
-	// Pulsación del botón de abajo
-	else if (LPC_GPIOINT->IO0IntStatR == 1 << LINEA_INT_PIN_12){
-		  LPC_GPIOINT->IO0IntClr = 1 << LINEA_INT_PIN_12;
-			signals = osSignalSet (tid_rebotes_joystick, signal_pwd_pulse); 
-	}
+
+
 	// Pulsación del botón del centro
-	else if (LPC_GPIOINT->IO0IntStatR == 1 << LINEA_INT_PIN_14){
+	if (LPC_GPIOINT->IO0IntStatR == 1 << LINEA_INT_PIN_14){
 		  LPC_GPIOINT->IO0IntClr = 1 << LINEA_INT_PIN_14;
 			signals = osSignalSet (tid_rebotes_joystick, signal_pwd_pulse); 
+	}
+	
+	/*if((LPC_GPIOINT->IO0IntStatR == 1 << INT_OVERLOAD)){
+		LPC_GPIOINT->IO0IntClr = 1 << INT_OVERLOAD;  	// Borra flag
+		estado_OL = false;
+	}*/
+	
+	if((LPC_GPIOINT->IO0IntStatF == 1 << INT_OVERLOAD)){
+		LPC_GPIOINT->IO0IntClr = 1 << INT_OVERLOAD;  	// Borra flag
+		osTimerStart(id_pwd_timer_int,100);
 	}
 }
 
 void callback_Timer_led_rgb (void const *arg){
 	
 	GPIO_PinWrite(port_led_RGB,led_BLUE,1);
+		
+}
+
+void callback_Timer_int (void const *arg){
+	
+	if(GPIO_PinRead(PUERTO_INT,INT_OVERLOAD) == 0){
+		estado_OL = true;
+		registrar_OL = true;
+	}
+	else estado_OL = false;
 		
 }

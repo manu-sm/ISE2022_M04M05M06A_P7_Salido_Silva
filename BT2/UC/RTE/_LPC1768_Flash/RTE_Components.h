@@ -37,6 +37,10 @@
 #define RTE_Drivers_ETH_MAC0            /* Driver ETH_MAC0 */
 /* Keil::CMSIS Driver:Ethernet PHY:DP83848C:6.2.0 */
 #define RTE_Drivers_PHY_DP83848C        /* Driver PHY DP83848C */
+/* Keil::CMSIS Driver:I2C:2.5.0 */
+#define RTE_Drivers_I2C0                /* Driver I2C0 */
+        #define RTE_Drivers_I2C1                /* Driver I2C1 */
+        #define RTE_Drivers_I2C2                /* Driver I2C2 */
 /* Keil::CMSIS Driver:SPI:SSP:2.7.0 */
 #define RTE_Drivers_SPI0                /* Driver SPI0 */
         #define RTE_Drivers_SPI1                /* Driver SPI1 */

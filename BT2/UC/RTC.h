@@ -31,3 +31,4 @@ void convert_unix_to_local (uint32_t time);
 
 void rtc_control (void);
 
+void get_registro_evento(uint8_t evento, uint8_t *buf);

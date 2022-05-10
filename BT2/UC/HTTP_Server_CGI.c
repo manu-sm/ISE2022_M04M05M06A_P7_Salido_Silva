@@ -30,16 +30,16 @@
 #define LED_3 					21
 #define LED_4 					23
 
-#define EV_GANANCIA_1   			0x00
-#define EV_GANANCIA_5   			0x01
-#define EV_GANANCIA_10  			0x02
-#define EV_GANANCIA_50  			0x03
-#define EV_GANANCIA_100 			0x04
+#define CMD_GANANCIA_1   			0x00
+#define CMD_GANANCIA_5   			0x01
+#define CMD_GANANCIA_10  			0x02
+#define CMD_GANANCIA_50  			0x03
+#define CMD_GANANCIA_100 			0x04
 #define EV_CHANGE_OVERLOAD		0X05
 #define EV_INT_OVERLOAD_ON		0x06
 #define EV_INT_OVERLOAD_OFF		0x07
 
-#define signal_i2c  					0x100
+#define signal_i2c  					0x100		
 
 
 // http_server.c
@@ -74,7 +74,7 @@ bool borrado_flash;
 char contenido_memoria[210];
 char lectura_memoria[70];
 uint8_t ganancia = 1;
-char umbral_OL[4] = {0,0,0,0};
+char umbral_OL[4] = {'0','.','0','0'};
 uint8_t overload_th = 0;
 bool interrupcion_OL = false;
 bool estado_OL = false;
@@ -89,6 +89,7 @@ char umbral_adc[3];
 uint8_t buffer_eventos[8];
 uint8_t registro_leido = 1;
 char registro_pedido[3] = {1,0,0};
+uint8_t comando;
 
 // My structure of CGI status variable.
 typedef struct {
@@ -98,7 +99,7 @@ typedef struct {
 #define MYBUF(p)        ((MY_BUF *)p)
 
 
-void get_registro_evento(uint8_t evento, uint8_t *buf){
+/*void get_registro_evento(uint8_t evento, uint8_t *buf){
 	
 	buf[0] = evento;
 	buf[1] = get_RTC_param(T_HORA);
@@ -108,7 +109,7 @@ void get_registro_evento(uint8_t evento, uint8_t *buf){
 	buf[5] = get_RTC_param(T_MES);
 	buf[6] = get_RTC_param(T_ANIO) >> 8;
 	buf[7] = get_RTC_param(T_ANIO) & 0xFF;
-}
+}*/
 
 
 // Process query string received by GET request.
@@ -198,20 +199,22 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
       if (strcmp (var, "ctrl=1") == 0) {
 				if (ganancia != 1){
 					ganancia = 1;
-					get_registro_evento(EV_GANANCIA_1,buffer_eventos);
+					comando = CMD_GANANCIA_1;
+					get_registro_evento(CMD_GANANCIA_1,buffer_eventos);
 					escribir_posicion(num_eventos[0]*8,8,buffer_eventos);
 					if(num_eventos[0]++ == 128) num_eventos[0] = 1 ;
 					escribir_posicion(0,1,num_eventos);
 					osSignalSet (tid_I2C, signal_i2c);
-					estado_agp = EV_GANANCIA_1;
+					//estado_agp = EV_GANANCIA_1;
 				}
       }
 			else if (strcmp (var, "ctrl=5") == 0) {
 				if (ganancia != 5){
-					estado_agp =EV_GANANCIA_5;
+					//estado_agp =EV_GANANCIA_5;
 					ganancia = 5;
+					comando = CMD_GANANCIA_5;
 					osSignalSet (tid_I2C, signal_i2c);
-					get_registro_evento(EV_GANANCIA_5,buffer_eventos);
+					get_registro_evento(CMD_GANANCIA_5,buffer_eventos);
 					escribir_posicion(num_eventos[0]*8,8,buffer_eventos);
 					if(num_eventos[0]++ == 128) num_eventos[0] = 1 ;
 					escribir_posicion(0,1,num_eventos);
@@ -219,9 +222,10 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
       }
 			else if (strcmp (var, "ctrl=10") == 0) {
         if (ganancia != 10){
-					estado_agp =EV_GANANCIA_10;
+					//estado_agp =EV_GANANCIA_10;
 					ganancia = 10;
-					get_registro_evento(EV_GANANCIA_10,buffer_eventos);
+					comando = CMD_GANANCIA_10;
+					get_registro_evento(CMD_GANANCIA_10,buffer_eventos);
 					escribir_posicion(num_eventos[0]*8,8,buffer_eventos);
 					if(num_eventos[0]++ == 128) num_eventos[0] = 1 ;
 					escribir_posicion(0,1,num_eventos);
@@ -230,24 +234,26 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
       }
 			else if (strcmp (var, "ctrl=50") == 0) {
 				if (ganancia != 50){
-					estado_agp = EV_GANANCIA_50;
+					//estado_agp = EV_GANANCIA_50;
 					ganancia = 50;
-					get_registro_evento(EV_GANANCIA_50,buffer_eventos);
+					osSignalSet (tid_I2C, signal_i2c);
+					comando = CMD_GANANCIA_50;
+					get_registro_evento(CMD_GANANCIA_50,buffer_eventos);
 					escribir_posicion(num_eventos[0]*8,8,buffer_eventos);
 					if(num_eventos[0]++ == 128) num_eventos[0] = 1 ;
-					escribir_posicion(0,1,num_eventos);
-					osSignalSet (tid_I2C, signal_i2c);
+					escribir_posicion(0,1,num_eventos);			
 				}
       }
 			else if (strcmp (var, "ctrl=100") == 0) {
         if (ganancia != 100){
-					estado_agp = EV_GANANCIA_100;
+					//estado_agp = CMD_GANANCIA_100;
 					ganancia = 100;
-					get_registro_evento(EV_GANANCIA_100,buffer_eventos);
+					osSignalSet (tid_I2C, signal_i2c);
+					comando = CMD_GANANCIA_100;
+					get_registro_evento(CMD_GANANCIA_100,buffer_eventos);
 					escribir_posicion(num_eventos[0]*8,8,buffer_eventos);
 					if(num_eventos[0]++ == 128) num_eventos[0] = 1 ;
 					escribir_posicion(0,1,num_eventos);
-					osSignalSet (tid_I2C, signal_i2c);
 				}
       }
 			else if (strncmp (var, "umbral_OL=", 5) == 0) {
@@ -261,26 +267,29 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
 							if(umbral_OL[2] != 0) overload_th += (umbral_OL[2] - '0');
 						}
 					}
+					if (overload_th > 99){
+						overload_th = 99;
+						umbral_OL[0] = '9';
+						umbral_OL[1] = '.';
+						umbral_OL[2] = '9';
+					}
+					osSignalSet (tid_I2C, signal_i2c);
+					comando = overload_th | 0x80;
 					get_registro_evento(overload_th|0x80,buffer_eventos);
 					escribir_posicion(num_eventos[0]*8,8,buffer_eventos);
 					if(num_eventos[0]++ == 128) num_eventos[0] = 1 ;
 					escribir_posicion(0,1,num_eventos);
-					estado_agp = EV_CHANGE_OVERLOAD;
-					osSignalSet (tid_I2C, signal_i2c);
+					//estado_agp = EV_CHANGE_OVERLOAD;
 				}
       }
 			else if (strcmp (var, "ctrl2=Activar") == 0) {
         if(interrupcion_OL == false){
 					interrupcion_OL = true;
-					/*estado_agp = EV_INT_OVERLOAD_ON;
-					osSignalSet (tid_I2C, signal_i2c);*/
 				}
       }
 			else if (strcmp (var, "ctrl2=Desactivar") == 0) {
 				if(interrupcion_OL == true){
 					interrupcion_OL = false;
-					/*estado_agp = EV_INT_OVERLOAD_OFF;
-					osSignalSet (tid_I2C, signal_i2c);*/
 				}
       }
 			else if (strncmp (var, "num_reg=",6) == 0) {

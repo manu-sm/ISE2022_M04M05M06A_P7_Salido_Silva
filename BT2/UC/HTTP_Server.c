@@ -26,6 +26,7 @@
 #include "time.h"
 #include "rl_net_lib.h"
 #include "lpc17xx_iap.h"
+#include "Driver_I2C.h"
 
 /*-------------------------------------------------------------------------------------------------------------*/
 #include "rebotes_joystick.h"
@@ -47,8 +48,10 @@ osEvent	i2c_event;
 #define EV_GANANCIA_50  			0x03
 #define EV_GANANCIA_100 			0x04
 #define EV_CHANGE_OVERLOAD		0X05
-#define EV_INT_OVERLOAD_ON		0x06
-#define EV_INT_OVERLOAD_OFF		0x07
+
+#define LPC1768_SLAVE       	0x28     
+#define SIG_TX								0x1000
+
 
 // Led RGB
 #define port_led_RGB	2
@@ -82,6 +85,19 @@ uint8_t num_eventos[1] ={1};
 // Estados.
 uint8_t estado_agp;	
 
+
+//Comunicacion I2C
+extern uint8_t comando;
+int32_t status;
+uint32_t addr = LPC1768_SLAVE;
+uint8_t data_tx, buf[10];
+
+/* I2C driver instance */
+extern ARM_DRIVER_I2C            Driver_I2C2;
+static ARM_DRIVER_I2C *I2Cdrv = &Driver_I2C2;
+
+static volatile uint32_t I2C_Event;
+
 osThreadDef(BlinkLed, osPriorityNormal, 1, 0);
 osThreadDef(RTC, osPriorityNormal, 1, 0);
 
@@ -95,6 +111,65 @@ osThreadId tid_RTC;
 
 uint64_t segundos = 0;
 
+
+/* I2C Signal Event function callback */
+void I2C_SignalEvent (uint32_t event) {
+ 
+  /* Save received events */
+  I2C_Event |= event;
+ 
+  /* Optionally, user can define specific actions for an event */
+ 
+  if (event & ARM_I2C_EVENT_TRANSFER_INCOMPLETE) {
+    /* Less data was transferred than requested */
+  }
+ 
+  if (event & ARM_I2C_EVENT_TRANSFER_DONE) {
+    /* Transfer or receive is finished */
+		
+		osSignalSet (tid_I2C, SIG_TX);
+
+  }
+ 
+  if (event & ARM_I2C_EVENT_ADDRESS_NACK) {
+    /* Slave address was not acknowledged */
+  }
+ 
+  if (event & ARM_I2C_EVENT_ARBITRATION_LOST) {
+    /* Master lost bus arbitration */
+  }
+ 
+  if (event & ARM_I2C_EVENT_BUS_ERROR) {
+    /* Invalid start/stop position detected */
+  }
+ 
+  if (event & ARM_I2C_EVENT_BUS_CLEAR) {
+    /* Bus clear operation completed */
+  }
+ 
+  if (event & ARM_I2C_EVENT_GENERAL_CALL) {
+    /* Slave was addressed with a general call address */
+  }
+ 
+  if (event & ARM_I2C_EVENT_SLAVE_RECEIVE) {
+    /* Slave addressed as receiver but SlaveReceive operation is not started */
+  }
+ 
+  if (event & ARM_I2C_EVENT_SLAVE_TRANSMIT) {
+    /* Slave addressed as transmitter but SlaveTransmit operation is not started */
+  }
+}
+
+void Init_i2c(void){
+	
+	int32_t status;
+	
+  status = I2Cdrv->Initialize (I2C_SignalEvent);
+  status = I2Cdrv->PowerControl (ARM_POWER_FULL);
+  status = I2Cdrv->Control      (ARM_I2C_BUS_SPEED, ARM_I2C_BUS_SPEED_STANDARD);
+  status = I2Cdrv->Control      (ARM_I2C_BUS_CLEAR, 0);
+	
+}
 
 void InitLED(){
 	GPIO_SetDir (PUERTO_LED, LED_1, GPIO_DIR_OUTPUT); 	// Establece dirección salida puerto LED1
@@ -173,43 +248,10 @@ static void BlinkLed (void const *arg) {
 static void I2C (void const *arg){
 
 	while (1) {
-    i2c_event = osSignalWait (signal_i2c, osWaitForever);
+		i2c_event = osSignalWait (signal_i2c, osWaitForever);
 		if (i2c_event.status == osEventSignal){
-			switch (estado_agp){
-			
-				case EV_GANANCIA_1:
-					
-				break;
-				
-				case EV_GANANCIA_5:
-					
-				break;
-				
-				case EV_GANANCIA_10:
-					
-				break;
-				
-				case EV_GANANCIA_50:
-						
-				break;
-				
-				case EV_GANANCIA_100:
-					
-				break;
-				
-				case EV_CHANGE_OVERLOAD:
-					
-				break;
-				
-				/*case EV_INT_OVERLOAD_ON:
-					
-				break;
-				
-				case EV_INT_OVERLOAD_OFF:
-					
-				break;*/
-
-			}
+			status = I2Cdrv->MasterTransmit(addr, &comando, 1, false);
+		  osSignalWait (SIG_TX, osWaitForever); 
 		}
     osThreadYield ();                                           // suspend thread
   }
@@ -229,7 +271,9 @@ int main (void) {
  // LED_Initialize     ();
  // Buttons_Initialize ();
  // ADC_Initialize     ();
+	Init_i2c();
 	Init_Pot1();
+	
 	InitLED();
   net_initialize     ();
 	Init_lcd();
