@@ -277,7 +277,7 @@ int main (void) {
 	InitLED();
   net_initialize     ();
 	Init_lcd();
-  osThreadCreate (osThread(BlinkLed), NULL);
+  //osThreadCreate (osThread(BlinkLed), NULL);
 	tid_I2C = osThreadCreate (osThread(I2C), NULL);
 	/*----------------------------------------------------------------------------------------------------------------*/
 	tid_RTC = osThreadCreate (osThread(RTC), NULL);

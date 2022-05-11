@@ -58,6 +58,7 @@ bool registrar_OL = false;
 extern uint8_t num_eventos[1];
 extern uint8_t buffer_eventos[8];
 extern uint8_t overload_th;
+bool lanzar_timer = false;
 
 extern char hora [64];
 extern char fecha [64];
@@ -133,7 +134,8 @@ void init_RTC (){
 	
 	// Configuración de las interrupciones de hardware
 	//- Indicamos en el registro IO0IntEnR que entradas van a poder generar interrupciones.
-	LPC_GPIOINT->IO0IntEnR = (1 << INT_OVERLOAD) | (1<<LINEA_INT_PIN_14);
+	PIN_Configure(PUERTO_INT, INT_OVERLOAD, PIN_FUNC_0, PIN_PINMODE_TRISTATE, PIN_PINMODE_NORMAL);
+	LPC_GPIOINT->IO0IntEnR = (1<<LINEA_INT_PIN_14); //| (1 << INT_OVERLOAD)
 	LPC_GPIOINT->IO0IntEnF = (1 << INT_OVERLOAD);
 	NVIC_EnableIRQ(EINT3_IRQn);	// Activamos las interruptciones del ENT3 (Asociado al GPIO).
 	
@@ -358,7 +360,7 @@ void convert_unix_to_local (uint32_t time){
 void rtc_control (void){
 
 	uint8_t contador;
-	
+
 	init_RTC ();
 	enable_RTC();
 	set_hour_intrrupt (2);
@@ -390,6 +392,10 @@ void rtc_control (void){
 					estado_OL = !estado_OL;
 			}
 			
+			if(lanzar_timer){
+				lanzar_timer = false;
+				osTimerStart(id_pwd_timer_int, time_oneshot_timer_int);
+			}
 			if(registrar_OL){
 				registrar_OL = false;
 				get_registro_evento(overload_th|0x80,buffer_eventos);
@@ -434,7 +440,7 @@ void EINT3_IRQHandler (void){
 	
 	if((LPC_GPIOINT->IO0IntStatF == 1 << INT_OVERLOAD)){
 		LPC_GPIOINT->IO0IntClr = 1 << INT_OVERLOAD;  	// Borra flag
-		osTimerStart(id_pwd_timer_int,100);
+		lanzar_timer = true;
 	}
 }
 

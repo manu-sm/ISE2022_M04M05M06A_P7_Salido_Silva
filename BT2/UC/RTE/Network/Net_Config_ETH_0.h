@@ -61,11 +61,11 @@
 
 //     <o>Address byte 3 <0-255>
 //     <i>Default: 0
-#define ETH0_IP3                11
+#define ETH0_IP3                20
 
 //     <o>Address byte 4 <0-255>
 //     <i>Default: 100
-#define ETH0_IP4                107
+#define ETH0_IP4                217
 //   </h>
 
 //   <h>Subnet mask
