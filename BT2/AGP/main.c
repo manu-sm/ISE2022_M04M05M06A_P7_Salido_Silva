@@ -5,7 +5,6 @@
 #define osObjectsPublic                     // define objects in main module
 #include "osObjects.h"                      // RTOS object definitions
 
-
 extern void Init_i2c(void);
 extern int Init_Thread (void);
 
@@ -18,6 +17,7 @@ int main (void) {
 	Init_i2c();
 	
   osKernelInitialize ();                    // initialize CMSIS-RTOS
+  
 
   // initialize peripherals here
 
@@ -26,5 +26,6 @@ int main (void) {
 	
 	Init_Thread();
 
-  osKernelStart ();                         // start thread execution 
+  osKernelStart ();                         // start thread execution
+
 }

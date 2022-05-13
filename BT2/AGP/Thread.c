@@ -4,6 +4,9 @@
 #include "LPC17xx.h"
 #include "GPIO_LPC17xx.h"
 #include "PIN_LPC17xx.h"
+#include <lpc17xx.h>
+
+
 
 /*----------------------------------------------------------------------------
  *      Thread 1 'Thread_Name': Sample thread
@@ -11,7 +14,6 @@
  
 
 #define LM75B_I2C_ADDR       	0x28      
- 
  
 #define REG_TEMP    					0x00
 #define REG_CONF	    				0x01
@@ -21,14 +23,15 @@
 #define SIG_TEMP							0x0001
 
 #define PUERTO_INT					2
-#define PIN_INTERRUP_I2C		0		// dip26
+#define PIN_INTERRUP_OVERLOAD_IN		    0		// dip26
+#define PIN_INTERRUP_OVERLOAD_OUT       1   // Dip 25
 #define PUERTO_INT_LED			1
 #define PIN_LED_4						23
 
 // Pines para controlar el multiplexor 21, 22, 23
-#define pin_b0_mux					5			// Dip 21
+#define pin_b0_mux					3			// Dip 23
 #define pin_b1_mux					4			// Dip 22
-#define pin_b2_mux					3			// Dip 23
+#define pin_b2_mux					5			// Dip 21
 
 #define gain_1							0
 #define gain_5							1
@@ -42,11 +45,17 @@ int32_t status = 0, nlect = 0;
 uint8_t cmd, buf[10];
 uint16_t comando;
 
+void Timer0_Init(void);
+void delayms(unsigned int milliseconds);
+float voltaje_overload = 0;
+unsigned int value=0;
+
 /* I2C driver instance */
 extern ARM_DRIVER_I2C            Driver_I2C2;
 static ARM_DRIVER_I2C *I2Cdrv = &Driver_I2C2;
 
 static volatile uint32_t I2C_Event;
+bool activar_int_overload = false;
 
 void Thread (void const *argument);                             // thread function
 osThreadId tid_Thread;                                          // thread id
@@ -108,17 +117,25 @@ void Init_i2c(void){
   status = I2Cdrv->PowerControl (ARM_POWER_FULL);
   status = I2Cdrv->Control      (ARM_I2C_BUS_SPEED, ARM_I2C_BUS_SPEED_STANDARD);
   status = I2Cdrv->Control      (ARM_I2C_BUS_CLEAR, 0);
+  
+  LPC_PINCON->PINSEL1 |= (1<<21); // dip 18
 	
 	GPIO_SetDir (PUERTO_INT, pin_b0_mux, GPIO_DIR_OUTPUT);
 	GPIO_SetDir (PUERTO_INT, pin_b1_mux, GPIO_DIR_OUTPUT);
 	GPIO_SetDir (PUERTO_INT, pin_b2_mux, GPIO_DIR_OUTPUT);
-
+  
+  // Interrupción de entrada del AGP
+  //PIN_Configure(PUERTO_INT, PIN_INTERRUP_OVERLOAD_IN, PIN_FUNC_0, PIN_PINMODE_PULLDOWN, PIN_PINMODE_NORMAL);
+  
+  // Pin de interrupción de salida hacia la UC
+  //GPIO_SetDir (PUERTO_INT, PIN_INTERRUP_OVERLOAD_OUT, GPIO_DIR_OUTPUT);
 	
 }
 
 int Init_Thread (void) {
 
   tid_Thread = osThreadCreate (osThread(Thread), NULL);
+
   if (!tid_Thread) return(-1);
   
   return(0);
@@ -136,7 +153,8 @@ void Thread (void const *argument) {
   I2Cdrv->Control(ARM_I2C_OWN_ADDRESS, 0x28);
  
   I2C_Event = 0;
-	
+	comando = gain_1;
+  
   while (1) {
 		
     /* Receive chunk */
@@ -146,11 +164,17 @@ void Thread (void const *argument) {
 		comando = buf[0];
 		
 		// Evaluamos si se va a hacer un cambio en el valor de Overload
-		if (cmd == 1 << 7){}
-		
-		// Evaluamos si se va a desactivar la interrupción de overload
-		else if (cmd == 1 << 6){}
-
+		if ((comando >> 7) == 1){
+    
+      voltaje_overload = (comando & 0x7F);
+      voltaje_overload = voltaje_overload / 100;
+      value = voltaje_overload / 0.00322266;
+      if(value > 309){
+       value=309;
+      }
+      
+      LPC_DAC->DACR = (value<<6);
+    }
 		// Evaluamos la ganancia
 		else {
 			
@@ -186,15 +210,25 @@ void Thread (void const *argument) {
 					GPIO_PinWrite (PUERTO_INT,pin_b2_mux,1);		
 				break;		
 			}
-		}
-			
-		/*buf[0] = ~buf[0];*/
-    /* Transmit chunk back */
-    //I2Cdrv->SlaveTransmit(buf,1);
-		//osSignalWait (SIG_TEMP, osWaitForever);
-		
+      
 		osThreadYield ();                                           // suspend thread
   }
-
-
+ }
 }
+
+void Timer0_Init(void)
+{
+  LPC_TIM0->CTCR = 0x0;
+  LPC_TIM0->PR = 25000-1;
+  LPC_TIM0->TCR = 0x02;
+}
+
+void delayms(unsigned int milliseconds)
+{
+  LPC_TIM0->TCR = 0x02;
+  LPC_TIM0->TCR = 0x01;
+  while(LPC_TIM0->TC < milliseconds);
+  LPC_TIM0->TCR = 0x00;
+}
+
+
