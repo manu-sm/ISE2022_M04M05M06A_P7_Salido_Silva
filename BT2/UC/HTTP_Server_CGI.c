@@ -284,6 +284,7 @@ void cgi_process_data (uint8_t code, const char *data, uint32_t len) {
 			else if (strcmp (var, "ctrl2=Desactivar") == 0) {
 				if(interrupcion_OL == true){
 					interrupcion_OL = false;
+					estado_OL = false;
 					LPC_GPIOINT->IO0IntEnF &= ~(1 << INT_OVERLOAD);
 				}
       }

@@ -61,7 +61,7 @@
 
 //     <o>Address byte 3 <0-255>
 //     <i>Default: 0
-#define ETH0_IP3                20
+#define ETH0_IP3                15
 
 //     <o>Address byte 4 <0-255>
 //     <i>Default: 100

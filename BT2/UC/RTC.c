@@ -135,8 +135,8 @@ void init_RTC (){
 	// Configuración de las interrupciones de hardware
 	//- Indicamos en el registro IO0IntEnR que entradas van a poder generar interrupciones.
 	PIN_Configure(PUERTO_INT, INT_OVERLOAD, PIN_FUNC_0, PIN_PINMODE_TRISTATE, PIN_PINMODE_NORMAL);
-	LPC_GPIOINT->IO0IntEnR = (1<<LINEA_INT_PIN_14); //| (1 << INT_OVERLOAD)
-	LPC_GPIOINT->IO0IntEnF = (1 << INT_OVERLOAD);
+	LPC_GPIOINT->IO0IntEnR = (1<<LINEA_INT_PIN_14)| (1 << INT_OVERLOAD);
+	//LPC_GPIOINT->IO0IntEnF = (1 << INT_OVERLOAD);
 	NVIC_EnableIRQ(EINT3_IRQn);	// Activamos las interruptciones del ENT3 (Asociado al GPIO).
 	
 	// Timer para controlar el encendido del led RGB
@@ -433,10 +433,10 @@ void EINT3_IRQHandler (void){
 			signals = osSignalSet (tid_rebotes_joystick, signal_pwd_pulse); 
 	}
 	
-	/*if((LPC_GPIOINT->IO0IntStatR == 1 << INT_OVERLOAD)){
+	if((LPC_GPIOINT->IO0IntStatR == 1 << INT_OVERLOAD)){
 		LPC_GPIOINT->IO0IntClr = 1 << INT_OVERLOAD;  	// Borra flag
-		estado_OL = false;
-	}*/
+		lanzar_timer = true;
+	}
 	
 	if((LPC_GPIOINT->IO0IntStatF == 1 << INT_OVERLOAD)){
 		LPC_GPIOINT->IO0IntClr = 1 << INT_OVERLOAD;  	// Borra flag
